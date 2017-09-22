@@ -12,6 +12,7 @@ const configFilePath = "config.json"
 type Credentials struct {
 	APIToken  string `json:"apiToken"`
 	ChannelID string `json:"channelId"`
+	BotID     string `json:"botId,omitempty"`
 }
 
 func (cred *Credentials) Read() {
