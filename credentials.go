@@ -8,13 +8,6 @@ import (
 
 const configFilePath = "config.json"
 
-// Credentials ...
-type Credentials struct {
-	APIToken  string `json:"apiToken"`
-	ChannelID string `json:"channelId"`
-	BotID     string `json:"botId,omitempty"`
-}
-
 func (cred *Credentials) Read() {
 	configFile, err := os.Open(configFilePath)
 	if err != nil {

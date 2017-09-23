@@ -8,20 +8,13 @@ import (
 	"time"
 
 	"github.com/arashout/mlpapi"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/nlopes/slack"
 )
 
 const (
-	RobotName = "roborooney"
+	robotName = "roborooney"
 )
-
-type RoboRooney struct {
-	cred        *Credentials
-	slackClient *slack.Client
-	mlpClient   *mlpapi.MLPClient
-	rtm         *slack.RTM
-	pitches     []*mlpapi.Pitch
-}
 
 func NewRobo(pitches []*mlpapi.Pitch) (robo *RoboRooney) {
 	robo = &RoboRooney{}
@@ -52,20 +45,18 @@ func (robo *RoboRooney) Connect() {
 	t2 := t1.AddDate(0, 0, 14)
 
 	for msg := range robo.rtm.IncomingEvents {
-		fmt.Print("Event Received: ")
 		switch ev := msg.Data.(type) {
 
 		case *slack.MessageEvent:
 			if !isBot(ev.Msg) {
 				if robo.isMentioned(&ev.Msg) {
+					robo.sendMessage("You mentioned me!")
 					for _, pitch := range robo.pitches {
 						slots := robo.mlpClient.GetAvailableSlots(*pitch, t1, t2)
 						for _, slot := range slots {
-							fmt.Println(slot)
+							robo.sendMessage(spew.Sdump(slot))
 						}
 					}
-
-					robo.sendMessage("You mentioned me!")
 				}
 			}
 
@@ -86,9 +77,9 @@ func (robo *RoboRooney) Close() {
 // Simple Wrapper functions
 func (robo *RoboRooney) isMentioned(msg *slack.Msg) bool {
 	if robo.cred.BotID != "" {
-		return strings.Contains(msg.Text, RobotName) || strings.Contains(msg.Text, fmt.Sprintf("<@%s>", robo.cred.BotID))
+		return strings.Contains(msg.Text, robotName) || strings.Contains(msg.Text, fmt.Sprintf("<@%s>", robo.cred.BotID))
 	}
-	return strings.Contains(msg.Text, RobotName)
+	return strings.Contains(msg.Text, robotName)
 }
 
 func isBot(msg slack.Msg) bool {
