@@ -5,9 +5,10 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/arashout/mlpapi"
 	"github.com/nlopes/slack"
-	"github.com/arashout/MyLocalPitchAPI"
 )
 
 const (
@@ -15,14 +16,21 @@ const (
 )
 
 type RoboRooney struct {
-	cred      *Credentials
-	apiClient *slack.Client
-	rtm       *slack.RTM
+	cred        *Credentials
+	slackClient *slack.Client
+	mlpClient   *mlpapi.MLPClient
+	rtm         *slack.RTM
+	pitches     []*mlpapi.Pitch
 }
 
-func NewRobo() (robo *RoboRooney) {
+func NewRobo(pitches []*mlpapi.Pitch) (robo *RoboRooney) {
 	robo = &RoboRooney{}
+	robo.mlpClient = mlpapi.New()
 	robo.initialize()
+	if len(pitches) == 0 {
+		log.Fatal("Need atleast one pitch to check")
+	}
+	robo.pitches = pitches
 	return robo
 }
 
@@ -30,15 +38,18 @@ func (robo *RoboRooney) initialize() {
 	robo.cred = &Credentials{}
 	robo.cred.Read()
 
-	robo.apiClient = slack.New(robo.cred.APIToken)
+	robo.slackClient = slack.New(robo.cred.APIToken)
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)
-	robo.apiClient.SetDebug(false)
+	robo.slackClient.SetDebug(false)
 }
 
 func (robo *RoboRooney) Connect() {
-	robo.rtm = robo.apiClient.NewRTM()
+	robo.rtm = robo.slackClient.NewRTM()
 	go robo.rtm.ManageConnection()
+
+	t1 := time.Now()
+	t2 := t1.AddDate(0, 0, 14)
 
 	for msg := range robo.rtm.IncomingEvents {
 		fmt.Print("Event Received: ")
@@ -47,6 +58,13 @@ func (robo *RoboRooney) Connect() {
 		case *slack.MessageEvent:
 			if !isBot(ev.Msg) {
 				if robo.isMentioned(&ev.Msg) {
+					for _, pitch := range robo.pitches {
+						slots := robo.mlpClient.GetAvailableSlots(*pitch, t1, t2)
+						for _, slot := range slots {
+							fmt.Println(slot)
+						}
+					}
+
 					robo.sendMessage("You mentioned me!")
 				}
 			}
@@ -62,7 +80,7 @@ func (robo *RoboRooney) Connect() {
 }
 
 func (robo *RoboRooney) Close() {
-	// Nothing to clean-up so far I think
+	robo.mlpClient.Close()
 }
 
 // Simple Wrapper functions
