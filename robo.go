@@ -1,4 +1,4 @@
-package main
+package roborooney
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/nlopes/slack"
+	"github.com/arashout/MyLocalPitchAPI"
 )
 
 const (

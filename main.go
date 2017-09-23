@@ -1,4 +1,4 @@
-package main
+package roborooney
 
 //go:generate echo '{"apiToken":"","channelId":""}' > config.json
 
