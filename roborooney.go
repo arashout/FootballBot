@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/arashout/mlpapi"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/nlopes/slack"
 )
 
@@ -55,8 +55,10 @@ func (robo *RoboRooney) Connect() {
 					for _, pitch := range robo.pitches {
 						slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
 						filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
+						robo.sendMessage("Slots available for:")
+						robo.sendMessage(pitch.VenuePath)
 						for _, slot := range filteredSlots {
-							robo.sendMessage(spew.Sdump(slot))
+							robo.sendMessage(formatSlotMessage(slot, pitch, true))
 						}
 					}
 				}
@@ -90,4 +92,26 @@ func isBot(msg slack.Msg) bool {
 
 func (robo *RoboRooney) sendMessage(s string) {
 	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, robo.cred.ChannelID))
+}
+
+func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) string {
+	const layout = "Mon Jan 2 15:04:05"
+	duration := slot.Attributes.Ends.Sub(slot.Attributes.Starts).Hours()
+	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
+	if withLink {
+		return fmt.Sprintf(
+			"%s\tDuration: %s Hour(s)\tAt %s\nLink:\t%s",
+			slot.Attributes.Starts.Format(layout),
+			stringDuration,
+			pitch.VenuePath,
+			mlpapi.GetSlotCheckoutLink(slot, pitch),
+		)
+	}
+
+	return fmt.Sprintf(
+		"%s\tDuration: %s Hour(s)\tAt %s",
+		slot.Attributes.Starts.Format(layout),
+		stringDuration,
+		pitch.VenuePath,
+	)
 }
