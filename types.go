@@ -10,7 +10,8 @@ type RoboRooney struct {
 	slackClient *slack.Client
 	mlpClient   *mlpapi.MLPClient
 	rtm         *slack.RTM
-	pitches     []*mlpapi.Pitch
+	pitches     []mlpapi.Pitch
+	rules       []func(mlpapi.Slot) bool
 }
 
 // Credentials ...

@@ -16,7 +16,7 @@ const (
 	robotName = "roborooney"
 )
 
-func NewRobo(pitches []*mlpapi.Pitch) (robo *RoboRooney) {
+func NewRobo(pitches []mlpapi.Pitch, rules []func(mlpapi.Slot) bool) (robo *RoboRooney) {
 	robo = &RoboRooney{}
 	robo.mlpClient = mlpapi.New()
 	robo.initialize()
@@ -24,6 +24,7 @@ func NewRobo(pitches []*mlpapi.Pitch) (robo *RoboRooney) {
 		log.Fatal("Need atleast one pitch to check")
 	}
 	robo.pitches = pitches
+	robo.rules = rules
 	return robo
 }
 
@@ -52,8 +53,9 @@ func (robo *RoboRooney) Connect() {
 				if robo.isMentioned(&ev.Msg) {
 					robo.sendMessage("You mentioned me!")
 					for _, pitch := range robo.pitches {
-						slots := robo.mlpClient.GetAvailableSlots(*pitch, t1, t2)
-						for _, slot := range slots {
+						slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
+						filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
+						for _, slot := range filteredSlots {
 							robo.sendMessage(spew.Sdump(slot))
 						}
 					}
