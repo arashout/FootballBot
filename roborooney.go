@@ -51,12 +51,10 @@ func (robo *RoboRooney) Connect() {
 		case *slack.MessageEvent:
 			if !isBot(ev.Msg) {
 				if robo.isMentioned(&ev.Msg) {
-					robo.sendMessage("You mentioned me!")
 					for _, pitch := range robo.pitches {
 						slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
 						filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
 						robo.sendMessage("Slots available for:")
-						robo.sendMessage(pitch.VenuePath)
 						for _, slot := range filteredSlots {
 							robo.sendMessage(formatSlotMessage(slot, pitch, true))
 						}
@@ -100,7 +98,7 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
 	if withLink {
 		return fmt.Sprintf(
-			"%s\tDuration: %s Hour(s)\tAt %s\nLink:\t%s",
+			"%s\tDuration: %s Hour(s)\t@\t%s\nLink:\t%s",
 			slot.Attributes.Starts.Format(layout),
 			stringDuration,
 			pitch.VenuePath,
@@ -109,7 +107,7 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 	}
 
 	return fmt.Sprintf(
-		"%s\tDuration: %s Hour(s)\tAt %s",
+		"%s\tDuration: %s Hour(s)\t@\t%s",
 		slot.Attributes.Starts.Format(layout),
 		stringDuration,
 		pitch.VenuePath,
