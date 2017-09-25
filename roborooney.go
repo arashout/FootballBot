@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,8 @@ const (
 	commandPoll     = "poll"
 	commandHelp     = "help"
 )
+
+var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
 func NewRobo(pitches []mlpapi.Pitch, rules []func(mlpapi.Slot) bool) (robo *RoboRooney) {
 	robo = &RoboRooney{}
@@ -67,24 +70,22 @@ func (robo *RoboRooney) Connect() {
 					// TODO: Have a help command
 					if strings.Contains(ev.Msg.Text, commandHelp) {
 						robo.sendMessage("Not implemented yet")
-					}
-					// TODO: Check if SlotID is passed, and pass link
-					if strings.Contains(ev.Msg.Text, commandCheckout) {
+					} else if strings.Contains(ev.Msg.Text, commandCheckout) {
 						// TODO: Read Pitch ID SLOT ID
+						fmt.Printf("%s\n", regexPitchSlotID.FindString(ev.Msg.Text))
 						// TODO: Need an API Call?
 						robo.sendMessage("Not implemented yet")
-					}
-					// TODO: Create a poll from available slots
-					if strings.Contains(ev.Msg.Text, commandPoll) {
+					} else if strings.Contains(ev.Msg.Text, commandPoll) {
+						// TODO: Create a poll from available slots
 						robo.sendMessage("Not implemented yet")
-					}
-					// List available slots
-					robo.sendMessage("Slots available for:")
-					for _, pitch := range robo.pitches {
-						slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
-						filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
-						for _, slot := range filteredSlots {
-							robo.sendMessage(formatSlotMessage(slot, pitch, false))
+					} else {
+						robo.sendMessage("Slots available for:")
+						for _, pitch := range robo.pitches {
+							slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
+							filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
+							for _, slot := range filteredSlots {
+								robo.sendMessage(formatSlotMessage(slot, pitch, false))
+							}
 						}
 					}
 				}
@@ -127,22 +128,20 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
 	if withLink {
 		return fmt.Sprintf(
-			"%s\tDuration: %s Hour(s)\t@\t%s\tPitchID:\t%s\tSlotID:\t%s\nLink:\t%s",
+			"%s\tDuration: %s Hour(s)\t@\t%s\tID:\t%s\nLink:\t%s",
 			slot.Attributes.Starts.Format(layout),
 			stringDuration,
 			pitch.Path,
-			pitch.ID,
-			slot.ID,
+			calculatePitchSlotId(pitch.ID, slot.ID),
 			mlpapi.GetSlotCheckoutLink(slot, pitch),
 		)
 	}
 
 	return fmt.Sprintf(
-		"%s\tDuration: %s Hour(s)\t@\t%s\tPitchID:\t%s\tSlotID:\t%s",
+		"%s\tDuration: %s Hour(s)\t@\t%s\tID:\t%s",
 		slot.Attributes.Starts.Format(layout),
 		stringDuration,
 		pitch.Path,
-		pitch.ID,
-		slot.ID,
+		calculatePitchSlotId(pitch.ID, slot.ID),
 	)
 }
