@@ -47,6 +47,7 @@ func (robo *RoboRooney) Connect() {
 	log.Println("Creating a websocket connection with Slack")
 	robo.rtm = robo.slackClient.NewRTM()
 	go robo.rtm.ManageConnection()
+	log.Println(robotName + " is ready to go.")
 
 	t1 := time.Now()
 	t2 := t1.AddDate(0, 0, 14)
@@ -57,12 +58,17 @@ func (robo *RoboRooney) Connect() {
 		case *slack.MessageEvent:
 			if !isBot(ev.Msg) {
 				if robo.isMentioned(&ev.Msg) {
+					// TODO: Have a help command
+					// TODO: Check if SlotID is passed, and pass link
+					// TODO: Create a poll from available slots
+
+					// List available slots
+					robo.sendMessage("Slots available for:")
 					for _, pitch := range robo.pitches {
 						slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
 						filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
-						robo.sendMessage("Slots available for:")
 						for _, slot := range filteredSlots {
-							robo.sendMessage(formatSlotMessage(slot, pitch, true))
+							robo.sendMessage(formatSlotMessage(slot, pitch, false))
 						}
 					}
 				}
@@ -105,18 +111,20 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
 	if withLink {
 		return fmt.Sprintf(
-			"%s\tDuration: %s Hour(s)\t@\t%s\nLink:\t%s",
+			"%s\tDuration: %s Hour(s)\t@\t%s\tSlotID:\t%s\nLink:\t%s",
 			slot.Attributes.Starts.Format(layout),
 			stringDuration,
 			pitch.VenuePath,
+			slot.ID,
 			mlpapi.GetSlotCheckoutLink(slot, pitch),
 		)
 	}
 
 	return fmt.Sprintf(
-		"%s\tDuration: %s Hour(s)\t@\t%s",
+		"%s\tDuration: %s Hour(s)\t@\t%s\tSlotID:\t%s",
 		slot.Attributes.Starts.Format(layout),
 		stringDuration,
 		pitch.VenuePath,
+		slot.ID,
 	)
 }
