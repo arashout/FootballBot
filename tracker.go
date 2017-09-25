@@ -1,6 +1,7 @@
 package roborooney
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/arashout/mlpapi"
@@ -21,9 +22,11 @@ func (tracker *Tracker) Insert(_pitch mlpapi.Pitch, _slot mlpapi.Slot) {
 	}
 }
 
-func (tracker *Tracker) Retrieve(pitchID, slotID string) PitchSlot {
-	pitchSlotID := calculatePitchSlotId(pitchID, slotID)
-	return tracker.pitchSlotMap[pitchSlotID]
+func (tracker *Tracker) Retrieve(pitchSlotID string) (PitchSlot, error) {
+	if pitchSlot, ok := tracker.pitchSlotMap[pitchSlotID]; ok {
+		return pitchSlot, nil
+	}
+	return PitchSlot{}, errors.New("pitch-slot-ID not found in tracker")
 
 }
 func calculatePitchSlotId(pitchID, slotID string) string {
