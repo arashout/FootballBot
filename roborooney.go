@@ -29,8 +29,13 @@ func NewRobo(pitches []mlpapi.Pitch, rules []func(mlpapi.Slot) bool) (robo *Robo
 }
 
 func (robo *RoboRooney) initialize() {
+	log.Println("Reading config.json for credentials")
 	robo.cred = &Credentials{}
 	robo.cred.Read()
+
+	if robo.cred.BotID == "" {
+		log.Println("BotID not set, at @roborooney will not work...")
+	}
 
 	robo.slackClient = slack.New(robo.cred.APIToken)
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
@@ -39,6 +44,7 @@ func (robo *RoboRooney) initialize() {
 }
 
 func (robo *RoboRooney) Connect() {
+	log.Println("Creating a websocket connection with Slack")
 	robo.rtm = robo.slackClient.NewRTM()
 	go robo.rtm.ManageConnection()
 
@@ -73,6 +79,7 @@ func (robo *RoboRooney) Connect() {
 }
 
 func (robo *RoboRooney) Close() {
+	log.Println(robotName + " is shutting down.")
 	robo.mlpClient.Close()
 }
 
