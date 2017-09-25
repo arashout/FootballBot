@@ -130,7 +130,7 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 			"%s\tDuration: %s Hour(s)\t@\t%s\tPitchID:\t%s\tSlotID:\t%s\nLink:\t%s",
 			slot.Attributes.Starts.Format(layout),
 			stringDuration,
-			pitch.VenuePath,
+			pitch.Path,
 			pitch.ID,
 			slot.ID,
 			mlpapi.GetSlotCheckoutLink(slot, pitch),
@@ -141,7 +141,7 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 		"%s\tDuration: %s Hour(s)\t@\t%s\tPitchID:\t%s\tSlotID:\t%s",
 		slot.Attributes.Starts.Format(layout),
 		stringDuration,
-		pitch.VenuePath,
+		pitch.Path,
 		pitch.ID,
 		slot.ID,
 	)
