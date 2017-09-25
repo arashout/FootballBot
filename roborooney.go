@@ -71,10 +71,16 @@ func (robo *RoboRooney) Connect() {
 					if strings.Contains(ev.Msg.Text, commandHelp) {
 						robo.sendMessage("Not implemented yet")
 					} else if strings.Contains(ev.Msg.Text, commandCheckout) {
-						// TODO: Read Pitch ID SLOT ID
-						fmt.Printf("%s\n", regexPitchSlotID.FindString(ev.Msg.Text))
-						// TODO: Need an API Call?
-						robo.sendMessage("Not implemented yet")
+						pitchSlotID := regexPitchSlotID.FindString(ev.Msg.Text)
+						if pitchSlotID != "" {
+							pitchSlot, err := robo.tracker.Retrieve(pitchSlotID)
+							if err != nil {
+								robo.sendMessage("Pitch-Slot ID not found. Try listing all available bookings again")
+							} else {
+								checkoutLink := mlpapi.GetSlotCheckoutLink(pitchSlot.pitch, pitchSlot.slot)
+								robo.sendMessage(checkoutLink)
+							}
+						}
 					} else if strings.Contains(ev.Msg.Text, commandPoll) {
 						// TODO: Create a poll from available slots
 						robo.sendMessage("Not implemented yet")
@@ -84,7 +90,8 @@ func (robo *RoboRooney) Connect() {
 							slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
 							filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
 							for _, slot := range filteredSlots {
-								robo.sendMessage(formatSlotMessage(slot, pitch, false))
+								robo.tracker.Insert(pitch, slot)
+								robo.sendMessage(formatSlotMessage(pitch, slot))
 							}
 						}
 					}
@@ -122,26 +129,15 @@ func (robo *RoboRooney) sendMessage(s string) {
 	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, robo.cred.ChannelID))
 }
 
-func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) string {
+func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
 	const layout = "Mon Jan 2 15:04:05"
 	duration := slot.Attributes.Ends.Sub(slot.Attributes.Starts).Hours()
 	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
-	if withLink {
-		return fmt.Sprintf(
-			"%s\tDuration: %s Hour(s)\t@\t%s\tID:\t%s\nLink:\t%s",
-			slot.Attributes.Starts.Format(layout),
-			stringDuration,
-			pitch.Path,
-			calculatePitchSlotId(pitch.ID, slot.ID),
-			mlpapi.GetSlotCheckoutLink(slot, pitch),
-		)
-	}
-
 	return fmt.Sprintf(
 		"%s\tDuration: %s Hour(s)\t@\t%s\tID:\t%s",
 		slot.Attributes.Starts.Format(layout),
 		stringDuration,
-		pitch.Path,
+		pitch.Name,
 		calculatePitchSlotId(pitch.ID, slot.ID),
 	)
 }
