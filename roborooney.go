@@ -1,6 +1,7 @@
 package roborooney
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -83,8 +84,11 @@ func (robo *RoboRooney) Connect() {
 						}
 					} else if strings.Contains(ev.Msg.Text, commandPoll) {
 						// TODO: Create a poll from available slots
-						robo.sendMessage("Not implemented yet")
+						robo.createPoll(robo.tracker.RetrieveAll())
 					} else {
+						// Clear previous pitch slots
+						robo.tracker.Clear()
+
 						robo.sendMessage("Slots available for:")
 						for _, pitch := range robo.pitches {
 							slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
@@ -127,6 +131,23 @@ func isBot(msg slack.Msg) bool {
 
 func (robo *RoboRooney) sendMessage(s string) {
 	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, robo.cred.ChannelID))
+}
+
+func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot) {
+	// TODO: Write function to check availablities before this
+	if len(pitchSlots) == 0 {
+		robo.sendMessage("No slots available for polling\nTry checking availablity first.")
+	}
+	// TODO: Check writing errors
+	var pollBuffer bytes.Buffer
+	pollBuffer.WriteString("/poll 'Which time(s) works best?' ")
+
+	for _, pitchSlot := range pitchSlots {
+		optionString := fmt.Sprintf(" '%s' ", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
+		pollBuffer.WriteString(optionString)
+	}
+
+	robo.sendMessage(pollBuffer.String())
 }
 
 func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {

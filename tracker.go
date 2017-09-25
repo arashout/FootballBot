@@ -27,8 +27,20 @@ func (tracker *Tracker) Retrieve(pitchSlotID string) (PitchSlot, error) {
 		return pitchSlot, nil
 	}
 	return PitchSlot{}, errors.New("pitch-slot-ID not found in tracker")
-
 }
+
+func (tracker *Tracker) RetrieveAll() []PitchSlot {
+	pitchSlots := []PitchSlot{}
+	for _, pitchSlot := range tracker.pitchSlotMap {
+		pitchSlots = append(pitchSlots, pitchSlot)
+	}
+	return pitchSlots
+}
+
+func (tracker *Tracker) Clear() {
+	tracker.pitchSlotMap = make(map[string]PitchSlot)
+}
+
 func calculatePitchSlotId(pitchID, slotID string) string {
 	return fmt.Sprintf("%s-%s", pitchID, slotID)
 }
