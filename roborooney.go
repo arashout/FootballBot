@@ -67,7 +67,7 @@ func (robo *RoboRooney) Connect() {
 					}
 					// TODO: Check if SlotID is passed, and pass link
 					if strings.Contains(ev.Msg.Text, commandCheckout) {
-						// TODO: Read SLOT ID
+						// TODO: Read Pitch ID SLOT ID
 						// TODO: Need an API Call?
 						robo.sendMessage("Not implemented yet")
 					}

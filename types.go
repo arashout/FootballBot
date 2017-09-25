@@ -20,3 +20,14 @@ type Credentials struct {
 	ChannelID string `json:"channelId"`
 	BotID     string `json:"botId,omitempty"`
 }
+
+// Tracker
+type Tracker struct {
+	pitchSlotMap map[string]PitchSlot
+}
+
+// PitchSlot is a struct used in tracker for keeping track of all the already queryed slots for retrieval
+type PitchSlot struct {
+	pitch mlpapi.Pitch
+	slot mlpapi.Slot
+}
