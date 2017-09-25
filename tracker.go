@@ -14,7 +14,7 @@ func NewTracker() *Tracker {
 
 func (tracker *Tracker) Insert(_pitch mlpapi.Pitch, _slot mlpapi.Slot) {
 	// Use the Pitch ID and Slot ID to create a unique identifer
-	pitchSlotID := calculatePitchSlotId(_pitch.VenueID, _slot.ID)
+	pitchSlotID := calculatePitchSlotId(_pitch.ID, _slot.ID)
 	tracker.pitchSlotMap[pitchSlotID] = PitchSlot{
 		pitch: _pitch,
 		slot:  _slot,

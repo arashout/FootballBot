@@ -10,6 +10,7 @@ type RoboRooney struct {
 	slackClient *slack.Client
 	mlpClient   *mlpapi.MLPClient
 	rtm         *slack.RTM
+	tracker     *Tracker
 	pitches     []mlpapi.Pitch
 	rules       []func(mlpapi.Slot) bool
 }
@@ -29,5 +30,5 @@ type Tracker struct {
 // PitchSlot is a struct used in tracker for keeping track of all the already queryed slots for retrieval
 type PitchSlot struct {
 	pitch mlpapi.Pitch
-	slot mlpapi.Slot
+	slot  mlpapi.Slot
 }

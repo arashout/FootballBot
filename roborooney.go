@@ -22,6 +22,8 @@ const (
 func NewRobo(pitches []mlpapi.Pitch, rules []func(mlpapi.Slot) bool) (robo *RoboRooney) {
 	robo = &RoboRooney{}
 	robo.mlpClient = mlpapi.New()
+	robo.tracker = NewTracker()
+
 	robo.initialize()
 	if len(pitches) == 0 {
 		log.Fatal("Need atleast one pitch to check")
@@ -52,6 +54,7 @@ func (robo *RoboRooney) Connect() {
 	go robo.rtm.ManageConnection()
 	log.Println(robotName + " is ready to go.")
 
+	// Look for slots between now and 2 weeks ahead
 	t1 := time.Now()
 	t2 := t1.AddDate(0, 0, 14)
 
@@ -128,7 +131,7 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 			slot.Attributes.Starts.Format(layout),
 			stringDuration,
 			pitch.VenuePath,
-			pitch.VenueID,
+			pitch.ID,
 			slot.ID,
 			mlpapi.GetSlotCheckoutLink(slot, pitch),
 		)
@@ -139,7 +142,7 @@ func formatSlotMessage(slot mlpapi.Slot, pitch mlpapi.Pitch, withLink bool) stri
 		slot.Attributes.Starts.Format(layout),
 		stringDuration,
 		pitch.VenuePath,
-		pitch.VenueID,
+		pitch.ID,
 		slot.ID,
 	)
 }
