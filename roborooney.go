@@ -93,12 +93,16 @@ func (robo *RoboRooney) Connect() {
 					robo.UpdateTracker(t1, t2)
 					robo.createPoll(robo.tracker.RetrieveAll())
 				} else {
-					// Update the tracker and list all available slots
+					// Update the tracker and list all available slots as one message
+					var messageBuffer bytes.Buffer
+
 					robo.UpdateTracker(t1, t2)
 					pitchSlots := robo.tracker.RetrieveAll()
 					for _, pitchSlot := range pitchSlots {
-						robo.sendMessage(formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
+						textSlot := fmt.Sprintf("%s\n", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
+						messageBuffer.WriteString(textSlot)
 					}
+					robo.sendMessage(messageBuffer.String())
 				}
 			}
 
