@@ -19,6 +19,13 @@ const (
 	commandCheckout = "checkout"
 	commandPoll     = "poll"
 	commandHelp     = "help"
+	textHelp        = `
+	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.\n
+	@roborooney : List available slots at nearby pitches\n
+	@roborooney help : Bring up this dialague again\n
+	@roborooney poll : Start a poll with the available slots\n
+	@roborooney checkout {pitch-slot ID} : Get the checkout link for a slot (pitch-slot ID is listed after each slot)\n
+	`
 )
 
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
@@ -58,6 +65,8 @@ func (robo *RoboRooney) Connect() {
 	go robo.rtm.ManageConnection()
 	log.Println(robotName + " is ready to go.")
 
+	robo.sendMessage(textHelp)
+
 	// Look for slots between now and 2 weeks ahead
 	t1 := time.Now()
 	t2 := t1.AddDate(0, 0, 14)
@@ -66,32 +75,29 @@ func (robo *RoboRooney) Connect() {
 		switch ev := msg.Data.(type) {
 
 		case *slack.MessageEvent:
-			if !isBot(ev.Msg) {
-				if robo.isMentioned(&ev.Msg) {
-					// TODO: Have a help command
-					if strings.Contains(ev.Msg.Text, commandHelp) {
-						robo.sendMessage("Not implemented yet")
-					} else if strings.Contains(ev.Msg.Text, commandCheckout) {
-						pitchSlotID := regexPitchSlotID.FindString(ev.Msg.Text)
-						if pitchSlotID != "" {
-							pitchSlot, err := robo.tracker.Retrieve(pitchSlotID)
-							if err != nil {
-								robo.sendMessage("Pitch-Slot ID not found. Try listing all available bookings again")
-							} else {
-								checkoutLink := mlpapi.GetSlotCheckoutLink(pitchSlot.pitch, pitchSlot.slot)
-								robo.sendMessage(checkoutLink)
-							}
+			if !isBot(ev.Msg) && robo.isMentioned(&ev.Msg) {
+				if strings.Contains(ev.Msg.Text, commandHelp) {
+					robo.sendMessage(textHelp)
+				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
+					pitchSlotID := regexPitchSlotID.FindString(ev.Msg.Text)
+					if pitchSlotID != "" {
+						pitchSlot, err := robo.tracker.Retrieve(pitchSlotID)
+						if err != nil {
+							robo.sendMessage("Pitch-Slot ID not found. Try listing all available bookings again")
+						} else {
+							checkoutLink := mlpapi.GetSlotCheckoutLink(pitchSlot.pitch, pitchSlot.slot)
+							robo.sendMessage(checkoutLink)
 						}
-					} else if strings.Contains(ev.Msg.Text, commandPoll) {
-						robo.UpdateTracker(t1, t2)
-						robo.createPoll(robo.tracker.RetrieveAll())
-					} else {
-						// Update the tracker and list all available slots
-						robo.UpdateTracker(t1, t2)
-						pitchSlots := robo.tracker.RetrieveAll()
-						for _, pitchSlot := range pitchSlots {
-							robo.sendMessage(formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
-						}
+					}
+				} else if strings.Contains(ev.Msg.Text, commandPoll) {
+					robo.UpdateTracker(t1, t2)
+					robo.createPoll(robo.tracker.RetrieveAll())
+				} else {
+					// Update the tracker and list all available slots
+					robo.UpdateTracker(t1, t2)
+					pitchSlots := robo.tracker.RetrieveAll()
+					for _, pitchSlot := range pitchSlots {
+						robo.sendMessage(formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
 					}
 				}
 			}
