@@ -20,11 +20,11 @@ const (
 	commandPoll     = "poll"
 	commandHelp     = "help"
 	textHelp        = `
-	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.\n
-	@roborooney : List available slots at nearby pitches\n
-	@roborooney help : Bring up this dialague again\n
-	@roborooney poll : Start a poll with the available slots\n
-	@roborooney checkout {pitch-slot ID} : Get the checkout link for a slot (pitch-slot ID is listed after each slot)\n
+	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.
+	@roborooney : List available slots at nearby pitches
+	@roborooney help : Bring up this dialague again
+	@roborooney poll : Start a poll with the available slots
+	@roborooney checkout {pitch-slot ID} : Get the checkout link for a slot (pitch-slot ID is listed after each slot)
 	`
 )
 
