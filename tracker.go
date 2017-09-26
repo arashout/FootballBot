@@ -3,6 +3,7 @@ package roborooney
 import (
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/arashout/mlpapi"
 )
@@ -34,6 +35,9 @@ func (tracker *Tracker) RetrieveAll() []PitchSlot {
 	for _, pitchSlot := range tracker.pitchSlotMap {
 		pitchSlots = append(pitchSlots, pitchSlot)
 	}
+	sort.Slice(pitchSlots, func(i, j int) bool {
+		return pitchSlots[i].slot.Attributes.Starts.Unix() < pitchSlots[j].slot.Attributes.Starts.Unix()
+	})
 	return pitchSlots
 }
 
