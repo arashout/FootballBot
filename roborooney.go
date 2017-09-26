@@ -83,20 +83,14 @@ func (robo *RoboRooney) Connect() {
 							}
 						}
 					} else if strings.Contains(ev.Msg.Text, commandPoll) {
-						// TODO: Create a poll from available slots
+						robo.UpdateTracker(t1, t2)
 						robo.createPoll(robo.tracker.RetrieveAll())
 					} else {
-						// Clear previous pitch slots
-						robo.tracker.Clear()
-
-						robo.sendMessage("Slots available for:")
-						for _, pitch := range robo.pitches {
-							slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
-							filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
-							for _, slot := range filteredSlots {
-								robo.tracker.Insert(pitch, slot)
-								robo.sendMessage(formatSlotMessage(pitch, slot))
-							}
+						// Update the tracker and list all available slots
+						robo.UpdateTracker(t1, t2)
+						pitchSlots := robo.tracker.RetrieveAll()
+						for _, pitchSlot := range pitchSlots {
+							robo.sendMessage(formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
 						}
 					}
 				}
@@ -117,7 +111,6 @@ func (robo *RoboRooney) Close() {
 	robo.mlpClient.Close()
 }
 
-// Simple Wrapper functions
 func (robo *RoboRooney) isMentioned(msg *slack.Msg) bool {
 	if robo.cred.BotID != "" {
 		return strings.Contains(msg.Text, robotName) || strings.Contains(msg.Text, fmt.Sprintf("<@%s>", robo.cred.BotID))
@@ -125,16 +118,11 @@ func (robo *RoboRooney) isMentioned(msg *slack.Msg) bool {
 	return strings.Contains(msg.Text, robotName)
 }
 
-func isBot(msg slack.Msg) bool {
-	return msg.BotID != ""
-}
-
 func (robo *RoboRooney) sendMessage(s string) {
 	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, robo.cred.ChannelID))
 }
 
 func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot) {
-	// TODO: Write function to check availablities before this
 	if len(pitchSlots) == 0 {
 		robo.sendMessage("No slots available for polling\nTry checking availablity first.")
 	}
@@ -150,6 +138,18 @@ func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot) {
 	robo.sendMessage(pollBuffer.String())
 }
 
+func (robo *RoboRooney) UpdateTracker(t1 time.Time, t2 time.Time) {
+	robo.tracker.Clear()
+
+	for _, pitch := range robo.pitches {
+		slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
+		filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
+		for _, slot := range filteredSlots {
+			robo.tracker.Insert(pitch, slot)
+		}
+	}
+}
+
 func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
 	const layout = "Mon Jan 2 15:04:05"
 	duration := slot.Attributes.Ends.Sub(slot.Attributes.Starts).Hours()
@@ -161,4 +161,8 @@ func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
 		pitch.Name,
 		calculatePitchSlotId(pitch.ID, slot.ID),
 	)
+}
+
+func isBot(msg slack.Msg) bool {
+	return msg.BotID != ""
 }
