@@ -161,11 +161,11 @@ func (robo *RoboRooney) UpdateTracker(t1 time.Time, t2 time.Time) {
 }
 
 func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
-	const layout = "Mon Jan 2 15:04:05"
+	const layout = "Mon Jan 2\t15:04:05"
 	duration := slot.Attributes.Ends.Sub(slot.Attributes.Starts).Hours()
 	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
 	return fmt.Sprintf(
-		"%s\tDuration: %s Hour(s)\t@\t%s\tID:\t%s",
+		"%s\t%s Hour(s)\t@\t%s\tID:\t%s",
 		slot.Attributes.Starts.Format(layout),
 		stringDuration,
 		pitch.Name,
