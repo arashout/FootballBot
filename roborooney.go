@@ -14,6 +14,7 @@ import (
 	"github.com/nlopes/slack"
 )
 
+// TODO: Add option to list all the rules being used right now... This will involve adding a string method to each rule in mlpapi
 const (
 	robotName       = "roborooney"
 	commandCheckout = "checkout"
@@ -22,8 +23,8 @@ const (
 	textHelp        = `
 	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.
 	@roborooney : List available slots at nearby pitches
-	@roborooney help : Bring up this dialague again
-	@roborooney poll : Start a poll with the available slots
+	@roborooney help : Bring up this dialogue again
+	@roborooney poll : Start a poll with the available slots (DOESN'T WORK RIGHT NOW)
 	@roborooney checkout {pitch-slot ID} : Get the checkout link for a slot (pitch-slot ID is listed after each slot)
 	`
 )
@@ -74,6 +75,7 @@ func (robo *RoboRooney) Connect() {
 
 		case *slack.MessageEvent:
 			if !isBot(ev.Msg) && robo.isMentioned(&ev.Msg) {
+
 				if strings.Contains(ev.Msg.Text, commandHelp) {
 					robo.sendMessage(textHelp)
 				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
