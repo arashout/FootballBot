@@ -24,7 +24,7 @@ const (
 	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.
 	@roborooney : List available slots at nearby pitches
 	@roborooney help : Bring up this dialogue again
-	@roborooney poll : Start a poll with the available slots (DOESN'T WORK RIGHT NOW)
+	@roborooney poll : Start a poll with the available slots (DOESN'T WORK)
 	@roborooney checkout {pitch-slot ID} : Get the checkout link for a slot (pitch-slot ID is listed after each slot)
 	`
 )
@@ -161,7 +161,7 @@ func (robo *RoboRooney) UpdateTracker(t1 time.Time, t2 time.Time) {
 }
 
 func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
-	const layout = "Mon Jan 2\t15:04:05"
+	const layout = "Mon Jan 2\t15:04"
 	duration := slot.Attributes.Ends.Sub(slot.Attributes.Starts).Hours()
 	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
 	return fmt.Sprintf(
