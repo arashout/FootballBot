@@ -65,8 +65,6 @@ func (robo *RoboRooney) Connect() {
 	go robo.rtm.ManageConnection()
 	log.Println(robotName + " is ready to go.")
 
-	robo.sendMessage(textHelp)
-
 	// Look for slots between now and 2 weeks ahead
 	t1 := time.Now()
 	t2 := t1.AddDate(0, 0, 14)
@@ -141,7 +139,7 @@ func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot) {
 	pollBuffer.WriteString("/poll 'Which time(s) works best?' ")
 
 	for _, pitchSlot := range pitchSlots {
-		optionString := fmt.Sprintf(" '%s' ", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
+		optionString := fmt.Sprintf(" \"%s\" ", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
 		pollBuffer.WriteString(optionString)
 	}
 
