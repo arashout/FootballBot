@@ -20,11 +20,15 @@ const (
 	commandCheckout = "checkout"
 	commandPoll     = "poll"
 	commandHelp     = "help"
+	commandRules    = "rules"
+	commandPitches  = "pitches"
 	textHelp        = `
 	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.
 	@roborooney : List available slots at nearby pitches
 	@roborooney help : Bring up this dialogue again
-	@roborooney poll : Start a poll with the available slots (DOESN'T WORK)
+	@roborooney rules : Lists the descriptions of the rules currently in effect
+	@roborooney pitches : Lists the monitored pitches
+	@roborooney poll : Start a poll with the available slots (Not working...)
 	@roborooney checkout {pitch-slot ID} : Get the checkout link for a slot (pitch-slot ID is listed after each slot)
 	`
 )
@@ -92,6 +96,18 @@ func (robo *RoboRooney) Connect() {
 				} else if strings.Contains(ev.Msg.Text, commandPoll) {
 					robo.UpdateTracker(t1, t2)
 					robo.createPoll(robo.tracker.RetrieveAll())
+				} else if strings.Contains(ev.Msg.Text, commandRules) {
+					var messageBuffer bytes.Buffer
+					for _, rule := range robo.rules {
+						messageBuffer.WriteString(rule.Description + "\n")
+					}
+					robo.sendMessage(messageBuffer.String())
+				} else if strings.Contains(ev.Msg.Text, commandPitches) {
+					var messageBuffer bytes.Buffer
+					for _, pitch := range robo.pitches {
+						messageBuffer.WriteString(pitch.Name + "\n")
+					}
+					robo.sendMessage(messageBuffer.String())
 				} else {
 					// Update the tracker and list all available slots as one message
 					var messageBuffer bytes.Buffer
