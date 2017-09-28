@@ -14,7 +14,6 @@ import (
 	"github.com/nlopes/slack"
 )
 
-// TODO: Add option to list all the rules being used right now... This will involve adding a string method to each rule in mlpapi
 const (
 	robotName       = "roborooney"
 	commandCheckout = "checkout"
