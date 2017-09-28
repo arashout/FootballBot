@@ -97,15 +97,16 @@ func (robo *RoboRooney) Connect() {
 					robo.UpdateTracker(t1, t2)
 					robo.createPoll(robo.tracker.RetrieveAll())
 				} else if strings.Contains(ev.Msg.Text, commandRules) {
+					// TODO: Message buffers are definetely over kill and I should find a cleaner way
 					var messageBuffer bytes.Buffer
 					for _, rule := range robo.rules {
-						messageBuffer.WriteString(rule.Description + "\n")
+						messageBuffer.WriteString("-" + rule.Description + "\n")
 					}
 					robo.sendMessage(messageBuffer.String())
 				} else if strings.Contains(ev.Msg.Text, commandPitches) {
 					var messageBuffer bytes.Buffer
 					for _, pitch := range robo.pitches {
-						messageBuffer.WriteString(pitch.Name + "\n")
+						messageBuffer.WriteString("-" + pitch.Name + "\n")
 					}
 					robo.sendMessage(messageBuffer.String())
 				} else {
