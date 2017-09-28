@@ -12,7 +12,7 @@ type RoboRooney struct {
 	rtm         *slack.RTM
 	tracker     *Tracker
 	pitches     []mlpapi.Pitch
-	rules       []mlpapi.SlotFilter
+	rules       []mlpapi.Rule
 }
 
 // Credentials ...
