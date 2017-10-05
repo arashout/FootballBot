@@ -34,7 +34,7 @@ const (
 
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
-func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule) (robo *RoboRooney) {
+func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred Credentials) (robo *RoboRooney) {
 	robo = &RoboRooney{}
 	robo.mlpClient = mlpapi.New()
 	robo.tracker = NewTracker()
@@ -45,18 +45,11 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule) (robo *RoboRooney) {
 	}
 	robo.pitches = pitches
 	robo.rules = rules
+	robo.cred = &cred
 	return robo
 }
 
 func (robo *RoboRooney) initialize() {
-	log.Println("Reading config.json for credentials")
-	robo.cred = &Credentials{}
-	robo.cred.Read()
-
-	if robo.cred.BotID == "" {
-		log.Println("BotID not set, at @roborooney will not work...")
-	}
-
 	robo.slackClient = slack.New(robo.cred.APIToken)
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)
