@@ -39,17 +39,20 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (ro
 	robo.mlpClient = mlpapi.New()
 	robo.tracker = NewTracker()
 
-	robo.initialize()
+	robo.initialize(cred)
+
 	if len(pitches) == 0 {
 		log.Fatal("Need atleast one pitch to check")
 	}
+
 	robo.pitches = pitches
 	robo.rules = rules
-	robo.cred = cred
+
 	return robo
 }
 
-func (robo *RoboRooney) initialize() {
+func (robo *RoboRooney) initialize(cred *Credentials) {
+	robo.cred = cred
 	robo.slackClient = slack.New(robo.cred.APIToken)
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)
