@@ -34,7 +34,7 @@ const (
 
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
-func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred Credentials) (robo *RoboRooney) {
+func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (robo *RoboRooney) {
 	robo = &RoboRooney{}
 	robo.mlpClient = mlpapi.New()
 	robo.tracker = NewTracker()
@@ -45,7 +45,7 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred Credentials) (rob
 	}
 	robo.pitches = pitches
 	robo.rules = rules
-	robo.cred = &cred
+	robo.cred = cred
 	return robo
 }
 
