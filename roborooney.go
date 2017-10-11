@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,13 +17,13 @@ const (
 	robotName       = "roborooney"
 	commandCheckout = "checkout"
 	commandPoll     = "poll"
-	commandHelp     = "help"
+	commandList     = "list"
 	commandRules    = "rules"
 	commandPitches  = "pitches"
 	textHelp        = `
 	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.
-	@roborooney : List available slots at nearby pitches
-	@roborooney help : Bring up this dialogue again
+	@roborooney : Bring up this dialogue again
+	@roborooney list : Lists the available slots that satisfy the rules
 	@roborooney rules : Lists the descriptions of the rules currently in effect
 	@roborooney pitches : Lists the monitored pitches
 	@roborooney poll : Start a poll with the available slots (Not working...)
@@ -76,37 +75,10 @@ func (robo *RoboRooney) Connect() {
 
 		case *slack.MessageEvent:
 			if !isBot(ev.Msg) && robo.isMentioned(&ev.Msg) {
+				// Post response to the message the event is from
+				currentChannelID := ev.Msg.Channel
 
-				if strings.Contains(ev.Msg.Text, commandHelp) {
-					robo.sendMessage(textHelp)
-				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
-					pitchSlotID := regexPitchSlotID.FindString(ev.Msg.Text)
-					if pitchSlotID != "" {
-						pitchSlot, err := robo.tracker.Retrieve(pitchSlotID)
-						if err != nil {
-							robo.sendMessage("Pitch-Slot ID not found. Try listing all available bookings again")
-						} else {
-							checkoutLink := mlpapi.GetSlotCheckoutLink(pitchSlot.pitch, pitchSlot.slot)
-							robo.sendMessage(checkoutLink)
-						}
-					}
-				} else if strings.Contains(ev.Msg.Text, commandPoll) {
-					robo.UpdateTracker(t1, t2)
-					robo.createPoll(robo.tracker.RetrieveAll())
-				} else if strings.Contains(ev.Msg.Text, commandRules) {
-					// TODO: Message buffers are definetely over kill and I should find a cleaner way
-					var messageBuffer bytes.Buffer
-					for _, rule := range robo.rules {
-						messageBuffer.WriteString("-" + rule.Description + "\n")
-					}
-					robo.sendMessage(messageBuffer.String())
-				} else if strings.Contains(ev.Msg.Text, commandPitches) {
-					var messageBuffer bytes.Buffer
-					for _, pitch := range robo.pitches {
-						messageBuffer.WriteString("-" + pitch.Name + "\n")
-					}
-					robo.sendMessage(messageBuffer.String())
-				} else {
+				if strings.Contains(ev.Msg.Text, commandList) {
 					// Update the tracker and list all available slots as one message
 					var messageBuffer bytes.Buffer
 
@@ -116,7 +88,37 @@ func (robo *RoboRooney) Connect() {
 						textSlot := fmt.Sprintf("%s\n", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
 						messageBuffer.WriteString(textSlot)
 					}
-					robo.sendMessage(messageBuffer.String())
+					robo.sendMessage(messageBuffer.String(), currentChannelID)
+
+				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
+					pitchSlotID := regexPitchSlotID.FindString(ev.Msg.Text)
+					if pitchSlotID != "" {
+						pitchSlot, err := robo.tracker.Retrieve(pitchSlotID)
+						if err != nil {
+							robo.sendMessage("Pitch-Slot ID not found. Try listing all available bookings again", currentChannelID)
+						} else {
+							checkoutLink := mlpapi.GetSlotCheckoutLink(pitchSlot.pitch, pitchSlot.slot)
+							robo.sendMessage(checkoutLink, currentChannelID)
+						}
+					}
+				} else if strings.Contains(ev.Msg.Text, commandPoll) {
+					robo.UpdateTracker(t1, t2)
+					robo.createPoll(robo.tracker.RetrieveAll(), currentChannelID)
+				} else if strings.Contains(ev.Msg.Text, commandRules) {
+					// TODO: Message buffers are definetely over kill and I should find a cleaner way
+					var messageBuffer bytes.Buffer
+					for _, rule := range robo.rules {
+						messageBuffer.WriteString("-" + rule.Description + "\n")
+					}
+					robo.sendMessage(messageBuffer.String(), currentChannelID)
+				} else if strings.Contains(ev.Msg.Text, commandPitches) {
+					var messageBuffer bytes.Buffer
+					for _, pitch := range robo.pitches {
+						messageBuffer.WriteString("-" + pitch.Name + "\n")
+					}
+					robo.sendMessage(messageBuffer.String(), currentChannelID)
+				} else {
+					robo.sendMessage(textHelp, currentChannelID)
 				}
 			}
 
@@ -143,13 +145,13 @@ func (robo *RoboRooney) isMentioned(msg *slack.Msg) bool {
 	return strings.Contains(msg.Text, robotName)
 }
 
-func (robo *RoboRooney) sendMessage(s string) {
-	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, robo.cred.ChannelID))
+func (robo *RoboRooney) sendMessage(s string, channelID string) {
+	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, channelID))
 }
 
-func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot) {
+func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot, channelID string) {
 	if len(pitchSlots) == 0 {
-		robo.sendMessage("No slots available for polling\nTry checking availablity first.")
+		robo.sendMessage("No slots available for polling\nTry checking availablity first.", channelID)
 	}
 	// TODO: Check writing errors
 	var pollBuffer bytes.Buffer
@@ -160,7 +162,7 @@ func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot) {
 		pollBuffer.WriteString(optionString)
 	}
 
-	robo.sendMessage(pollBuffer.String())
+	robo.sendMessage(pollBuffer.String(), channelID)
 }
 
 // UpdateTracker updates the list of available slots in the shared tracker struct given two time objects
@@ -174,21 +176,4 @@ func (robo *RoboRooney) UpdateTracker(t1 time.Time, t2 time.Time) {
 			robo.tracker.Insert(pitch, slot)
 		}
 	}
-}
-
-func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
-	const layout = "Mon Jan 2\t15:04"
-	duration := slot.Attributes.Ends.Sub(slot.Attributes.Starts).Hours()
-	stringDuration := strconv.FormatFloat(duration, 'f', -1, 64)
-	return fmt.Sprintf(
-		"%s\t%s Hour(s)\t@\t%s\tID:\t%s",
-		slot.Attributes.Starts.Format(layout),
-		stringDuration,
-		pitch.Name,
-		calculatePitchSlotId(pitch.ID, slot.ID),
-	)
-}
-
-func isBot(msg slack.Msg) bool {
-	return msg.BotID != ""
 }

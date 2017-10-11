@@ -17,9 +17,8 @@ type RoboRooney struct {
 
 // Credentials ...
 type Credentials struct {
-	APIToken  string
-	ChannelID string
-	BotID     string
+	APIToken string
+	BotID    string
 }
 
 // Tracker
