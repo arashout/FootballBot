@@ -34,6 +34,7 @@ const (
 
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
+// NewRobo creates a new initialized robo object that the client can interact with
 func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (robo *RoboRooney) {
 	robo = &RoboRooney{}
 	robo.mlpClient = mlpapi.New()
@@ -59,13 +60,14 @@ func (robo *RoboRooney) initialize(cred *Credentials) {
 	robo.slackClient.SetDebug(false)
 }
 
+// Connect to Slack and start main loop
 func (robo *RoboRooney) Connect() {
 	log.Println("Creating a websocket connection with Slack")
 	robo.rtm = robo.slackClient.NewRTM()
 	go robo.rtm.ManageConnection()
 	log.Println(robotName + " is ready to go.")
 
-	// Look for slots between now and 2 weeks ahead
+	// Look for slots between now and 2 weeks ahead, which is the limit of MyLocalPitch API anyway
 	t1 := time.Now()
 	t2 := t1.AddDate(0, 0, 14)
 
@@ -128,6 +130,7 @@ func (robo *RoboRooney) Connect() {
 	}
 }
 
+// Close robo
 func (robo *RoboRooney) Close() {
 	log.Println(robotName + " is shutting down.")
 	robo.mlpClient.Close()
@@ -160,6 +163,7 @@ func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot) {
 	robo.sendMessage(pollBuffer.String())
 }
 
+// UpdateTracker updates the list of available slots in the shared tracker struct given two time objects
 func (robo *RoboRooney) UpdateTracker(t1 time.Time, t2 time.Time) {
 	robo.tracker.Clear()
 
