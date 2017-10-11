@@ -1,3 +1,3 @@
 # RoboRooney
 
-# For developing rule https://play.golang.org/p/DqSIOqawrn
+This is the Slack-bot that uses MyLocalPitchAPI to find you available slots to play football at.
