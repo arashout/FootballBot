@@ -1,7 +1,6 @@
 package roborooney
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -80,15 +79,15 @@ func (robo *RoboRooney) Connect() {
 
 				if strings.Contains(ev.Msg.Text, commandList) {
 					// Update the tracker and list all available slots as one message
-					var messageBuffer bytes.Buffer
+					textListSlots := ""
 
 					robo.UpdateTracker(t1, t2)
 					pitchSlots := robo.tracker.RetrieveAll()
 					for _, pitchSlot := range pitchSlots {
 						textSlot := fmt.Sprintf("%s\n", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
-						messageBuffer.WriteString(textSlot)
+						textListSlots += textSlot
 					}
-					robo.sendMessage(messageBuffer.String(), currentChannelID)
+					robo.sendMessage(textListSlots, currentChannelID)
 
 				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
 					pitchSlotID := regexPitchSlotID.FindString(ev.Msg.Text)
@@ -105,18 +104,17 @@ func (robo *RoboRooney) Connect() {
 					robo.UpdateTracker(t1, t2)
 					robo.createPoll(robo.tracker.RetrieveAll(), currentChannelID)
 				} else if strings.Contains(ev.Msg.Text, commandRules) {
-					// TODO: Message buffers are definetely over kill and I should find a cleaner way
-					var messageBuffer bytes.Buffer
+					textRules := ""
 					for _, rule := range robo.rules {
-						messageBuffer.WriteString("-" + rule.Description + "\n")
+						textRules += "-" + rule.Description + "\n"
 					}
-					robo.sendMessage(messageBuffer.String(), currentChannelID)
+					robo.sendMessage(textRules, currentChannelID)
 				} else if strings.Contains(ev.Msg.Text, commandPitches) {
-					var messageBuffer bytes.Buffer
+					textPitches := ""
 					for _, pitch := range robo.pitches {
-						messageBuffer.WriteString("-" + pitch.Name + "\n")
+						textPitches += "-" + pitch.Name + "\n"
 					}
-					robo.sendMessage(messageBuffer.String(), currentChannelID)
+					robo.sendMessage(textPitches, currentChannelID)
 				} else {
 					robo.sendMessage(textHelp, currentChannelID)
 				}
@@ -153,16 +151,15 @@ func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot, channelID string) {
 	if len(pitchSlots) == 0 {
 		robo.sendMessage("No slots available for polling\nTry checking availablity first.", channelID)
 	}
-	// TODO: Check writing errors
-	var pollBuffer bytes.Buffer
-	pollBuffer.WriteString("/poll 'Which time(s) works best?' ")
+
+	textPoll := "/poll 'Which time(s) works best?' "
 
 	for _, pitchSlot := range pitchSlots {
 		optionString := fmt.Sprintf(" \"%s\" ", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
-		pollBuffer.WriteString(optionString)
+		textPoll += optionString
 	}
 
-	robo.sendMessage(pollBuffer.String(), channelID)
+	robo.sendMessage(textPoll, channelID)
 }
 
 // UpdateTracker updates the list of available slots in the shared tracker struct given two time objects
