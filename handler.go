@@ -2,6 +2,7 @@ package roborooney
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/arashout/mlpapi"
@@ -13,7 +14,8 @@ func getTimeRange() (time.Time, time.Time) {
 	return t1, t1.AddDate(0, 0, 14)
 }
 
-func handleCommand(robo *RoboRooney, command string, msgText string, channelID string) {
+// NOTE: That msgText isn't always necessary so you can simply pass an empty string
+func handleCommand(robo *RoboRooney, command string, channelID string, msgText string) {
 	t1, t2 := getTimeRange()
 	// Update the tracker so we have most up to date listings
 	robo.UpdateTracker(t1, t2)
@@ -33,7 +35,7 @@ func handleCommand(robo *RoboRooney, command string, msgText string, channelID s
 	case commandHelp:
 		result = textHelp
 	default:
-		fmt.Println("Command not recognized!")
+		log.Println("Command not recognized!")
 	}
 	robo.sendMessage(result, channelID)
 
