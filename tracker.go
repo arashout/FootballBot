@@ -4,9 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"sync"
 
 	"github.com/arashout/mlpapi"
 )
+
+// Tracker
+type Tracker struct {
+	pitchSlotMap map[string]PitchSlot
+	mu           sync.RWMutex
+}
 
 func NewTracker() *Tracker {
 	return &Tracker{
@@ -15,6 +22,9 @@ func NewTracker() *Tracker {
 }
 
 func (tracker *Tracker) Insert(_pitch mlpapi.Pitch, _slot mlpapi.Slot) {
+	tracker.mu.Lock()
+	defer tracker.mu.Unlock()
+
 	// Use the Pitch ID and Slot ID to create a unique identifer
 	pitchSlotID := calculatePitchSlotId(_pitch.ID, _slot.ID)
 	tracker.pitchSlotMap[pitchSlotID] = PitchSlot{
@@ -24,6 +34,9 @@ func (tracker *Tracker) Insert(_pitch mlpapi.Pitch, _slot mlpapi.Slot) {
 }
 
 func (tracker *Tracker) Retrieve(pitchSlotID string) (PitchSlot, error) {
+	tracker.mu.RLock()
+	defer tracker.mu.RUnlock()
+
 	if pitchSlot, ok := tracker.pitchSlotMap[pitchSlotID]; ok {
 		return pitchSlot, nil
 	}
@@ -31,6 +44,9 @@ func (tracker *Tracker) Retrieve(pitchSlotID string) (PitchSlot, error) {
 }
 
 func (tracker *Tracker) RetrieveAll() []PitchSlot {
+	tracker.mu.RLock()
+	defer tracker.mu.RUnlock()
+
 	pitchSlots := []PitchSlot{}
 	for _, pitchSlot := range tracker.pitchSlotMap {
 		pitchSlots = append(pitchSlots, pitchSlot)
@@ -42,6 +58,9 @@ func (tracker *Tracker) RetrieveAll() []PitchSlot {
 }
 
 func (tracker *Tracker) Clear() {
+	tracker.mu.Lock()
+	defer tracker.mu.Unlock()
+
 	tracker.pitchSlotMap = make(map[string]PitchSlot)
 }
 
