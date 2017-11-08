@@ -19,6 +19,7 @@ const (
 	commandList     = "list"
 	commandRules    = "rules"
 	commandPitches  = "pitches"
+	commandHelp     = "help"
 	textHelp        = `
 	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.
 	@roborooney : Bring up this dialogue again
@@ -65,58 +66,25 @@ func (robo *RoboRooney) Connect() {
 	go robo.rtm.ManageConnection()
 	log.Println(robotName + " is ready to go.")
 
-	// Look for slots between now and 2 weeks ahead, which is the limit of MyLocalPitch API anyway
-	t1 := time.Now()
-	t2 := t1.AddDate(0, 0, 14)
-
 	for msg := range robo.rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 
 		case *slack.MessageEvent:
 			if !isBot(ev.Msg) && robo.isMentioned(&ev.Msg) {
-				// Post response to the message the event is from
-				currentChannelID := ev.Msg.Channel
-
+				// Determine which command is passed as an argument, default to sending help message
+				// Note: We send these messages only to the channel we received the event from
 				if strings.Contains(ev.Msg.Text, commandList) {
-					// Update the tracker and list all available slots as one message
-					textListSlots := ""
-
-					robo.UpdateTracker(t1, t2)
-					pitchSlots := robo.tracker.RetrieveAll()
-					for _, pitchSlot := range pitchSlots {
-						textSlot := fmt.Sprintf("%s\n", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
-						textListSlots += textSlot
-					}
-					robo.sendMessage(textListSlots, currentChannelID)
-
+					handleCommand(robo, commandList, ev.Msg.Text, ev.Msg.Channel)
 				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
-					pitchSlotID := regexPitchSlotID.FindString(ev.Msg.Text)
-					if pitchSlotID != "" {
-						pitchSlot, err := robo.tracker.Retrieve(pitchSlotID)
-						if err != nil {
-							robo.sendMessage("Pitch-Slot ID not found. Try listing all available bookings again", currentChannelID)
-						} else {
-							checkoutLink := mlpapi.GetSlotCheckoutLink(pitchSlot.pitch, pitchSlot.slot)
-							robo.sendMessage(checkoutLink, currentChannelID)
-						}
-					}
+					handleCommand(robo, commandCheckout, ev.Msg.Text, ev.Msg.Channel)
 				} else if strings.Contains(ev.Msg.Text, commandPoll) {
-					robo.UpdateTracker(t1, t2)
-					robo.createPoll(robo.tracker.RetrieveAll(), currentChannelID)
+					handleCommand(robo, commandPoll, ev.Msg.Text, ev.Msg.Channel)
 				} else if strings.Contains(ev.Msg.Text, commandRules) {
-					textRules := ""
-					for _, rule := range robo.rules {
-						textRules += "-" + rule.Description + "\n"
-					}
-					robo.sendMessage(textRules, currentChannelID)
+					handleCommand(robo, commandRules, ev.Msg.Text, ev.Msg.Channel)
 				} else if strings.Contains(ev.Msg.Text, commandPitches) {
-					textPitches := ""
-					for _, pitch := range robo.pitches {
-						textPitches += "-" + pitch.Name + "\n"
-					}
-					robo.sendMessage(textPitches, currentChannelID)
+					handleCommand(robo, commandPitches, ev.Msg.Text, ev.Msg.Channel)
 				} else {
-					robo.sendMessage(textHelp, currentChannelID)
+					handleCommand(robo, commandHelp, ev.Msg.Text, ev.Msg.Channel)
 				}
 			}
 
@@ -145,21 +113,6 @@ func (robo *RoboRooney) isMentioned(msg *slack.Msg) bool {
 
 func (robo *RoboRooney) sendMessage(s string, channelID string) {
 	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, channelID))
-}
-
-func (robo *RoboRooney) createPoll(pitchSlots []PitchSlot, channelID string) {
-	if len(pitchSlots) == 0 {
-		robo.sendMessage("No slots available for polling\nTry checking availablity first.", channelID)
-	}
-
-	textPoll := "/poll 'Which time(s) works best?' "
-
-	for _, pitchSlot := range pitchSlots {
-		optionString := fmt.Sprintf(" \"%s\" ", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
-		textPoll += optionString
-	}
-
-	robo.sendMessage(textPoll, channelID)
 }
 
 // UpdateTracker updates the list of available slots in the shared tracker struct given two time objects
