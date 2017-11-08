@@ -33,13 +33,25 @@ const (
 
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
+type RoboRooney struct {
+	cred        *Credentials
+	slackClient *slack.Client
+	mlpClient   *mlpapi.MLPClient
+	rtm         *slack.RTM
+	tracker     *Tracker
+	ticker      *time.Ticker
+	pitches     []mlpapi.Pitch
+	rules       []mlpapi.Rule
+}
+
 // NewRobo creates a new initialized robo object that the client can interact with
 func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (robo *RoboRooney) {
 	robo = &RoboRooney{}
+	robo.initialize(cred)
+
 	robo.mlpClient = mlpapi.New()
 	robo.tracker = NewTracker()
-
-	robo.initialize(cred)
+	robo.ticker = time.NewTicker(time.Minute * time.Duration(cred.TickerInterval))
 
 	if len(pitches) == 0 {
 		log.Fatal("Need atleast one pitch to check")
@@ -53,7 +65,7 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (ro
 
 func (robo *RoboRooney) initialize(cred *Credentials) {
 	robo.cred = cred
-	robo.slackClient = slack.New(robo.cred.APIToken)
+	robo.slackClient = slack.New(cred.APIToken)
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)
 	robo.slackClient.SetDebug(false)
@@ -66,6 +78,14 @@ func (robo *RoboRooney) Connect() {
 	go robo.rtm.ManageConnection()
 	log.Println(robotName + " is ready to go.")
 
+	go func() {
+		for t := range robo.ticker.C {
+			log.Println("Tick at: ", t)
+			handleCommand(robo, commandList, robo.cred.NotificationChannelID, "")
+		}
+	}()
+
+	// Listen for any incoming messages that mention @roborooney in channels it is invited to
 	for msg := range robo.rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 
@@ -74,25 +94,25 @@ func (robo *RoboRooney) Connect() {
 				// Determine which command is passed as an argument, default to sending help message
 				// Note: We send these messages only to the channel we received the event from
 				if strings.Contains(ev.Msg.Text, commandList) {
-					handleCommand(robo, commandList, ev.Msg.Text, ev.Msg.Channel)
+					handleCommand(robo, commandList, ev.Msg.Channel, ev.Msg.Text)
 				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
-					handleCommand(robo, commandCheckout, ev.Msg.Text, ev.Msg.Channel)
+					handleCommand(robo, commandCheckout, ev.Msg.Channel, ev.Msg.Text)
 				} else if strings.Contains(ev.Msg.Text, commandPoll) {
-					handleCommand(robo, commandPoll, ev.Msg.Text, ev.Msg.Channel)
+					handleCommand(robo, commandPoll, ev.Msg.Channel, ev.Msg.Text)
 				} else if strings.Contains(ev.Msg.Text, commandRules) {
-					handleCommand(robo, commandRules, ev.Msg.Text, ev.Msg.Channel)
+					handleCommand(robo, commandRules, ev.Msg.Channel, ev.Msg.Text)
 				} else if strings.Contains(ev.Msg.Text, commandPitches) {
-					handleCommand(robo, commandPitches, ev.Msg.Text, ev.Msg.Channel)
+					handleCommand(robo, commandPitches, ev.Msg.Channel, ev.Msg.Text)
 				} else {
-					handleCommand(robo, commandHelp, ev.Msg.Text, ev.Msg.Channel)
+					handleCommand(robo, commandHelp, ev.Msg.Channel, ev.Msg.Text)
 				}
 			}
 
 		case *slack.RTMError:
-			fmt.Printf("Error: %s\n", ev.Error())
+			log.Printf("Error: %s\n", ev.Error())
 
 		case *slack.InvalidAuthEvent:
-			fmt.Printf("Invalid credentials")
+			log.Printf("Invalid credentials")
 			return
 		}
 	}
