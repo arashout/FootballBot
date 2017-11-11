@@ -25,6 +25,16 @@ func (robo *RoboRooney) HandleMessage(w http.ResponseWriter, r *http.Request) {
 	var textResult string
 	if strings.Contains(textSlash, commandList) {
 		textResult = robo.handlerListCommand()
+	} else if strings.Contains(textSlash, commandUnseen) {
+		textResult = robo.handlerUnseenCommand(false)
+	} else if strings.Contains(textSlash, commandRules) {
+		textResult = robo.handlerRulesCommand()
+	} else if strings.Contains(textSlash, commandPitches) {
+		textResult = robo.handlerPitchesCommand()
+	} else if strings.Contains(textSlash, commandPoll) {
+		textResult = robo.handlerPollCommand()
+	} else if strings.Contains(textSlash, commandCheckout) {
+		textResult = robo.handlerCheckoutCommand(textSlash)
 	} else {
 		fmt.Fprintln(w, textHelp)
 		return
