@@ -83,16 +83,16 @@ func (robo *RoboRooney) Close() {
 	robo.mlpClient.Close()
 }
 
-func (robo *RoboRooney) getFilteredPitchSlots(t1 time.Time, t2 time.Time) map[string]PitchSlot {
-	pitchSlotMap := make(map[string]PitchSlot)
+func (robo *RoboRooney) getFilteredPitchSlots(t1 time.Time, t2 time.Time) map[string]pitchSlot {
+	pitchSlotMap := make(map[string]pitchSlot)
 
 	for _, pitch := range robo.pitches {
 		slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
 		filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
 
 		for _, slot := range filteredSlots {
-			pitchSlot := createPitchSlot(pitch, slot)
-			pitchSlotMap[pitchSlot.id] = pitchSlot
+			ps := createPitchSlot(pitch, slot)
+			pitchSlotMap[ps.id] = ps
 		}
 
 	}
