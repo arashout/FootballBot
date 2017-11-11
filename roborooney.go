@@ -43,13 +43,13 @@ type RoboRooney struct {
 }
 
 // NewRobo creates a new initialized robo object that the client can interact with
-func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (robo *RoboRooney) {
+func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule) (robo *RoboRooney) {
 	robo = &RoboRooney{}
 	robo.cred = readCredentials()
 
 	robo.mlpClient = mlpapi.New()
 	robo.tracker = NewTracker()
-	robo.ticker = time.NewTicker(time.Minute * time.Duration(cred.TickerInterval))
+	robo.ticker = time.NewTicker(time.Minute * time.Duration(robo.cred.TickerInterval))
 
 	if len(pitches) == 0 {
 		log.Fatal("Need atleast one pitch to check")
