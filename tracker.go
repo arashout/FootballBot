@@ -9,27 +9,27 @@ import (
 
 // Tracker
 type Tracker struct {
-	pitchSlotMap map[string]PitchSlot
+	pitchSlotMap map[string]pitchSlot
 	mu           sync.RWMutex
 }
 
 func NewTracker() *Tracker {
 	return &Tracker{
-		pitchSlotMap: make(map[string]PitchSlot),
+		pitchSlotMap: make(map[string]pitchSlot),
 	}
 }
 
-func (tracker *Tracker) upsert(pitchSlot PitchSlot) {
+func (tracker *Tracker) upsert(ps pitchSlot) {
 	tracker.mu.Lock()
 	defer tracker.mu.Unlock()
 
-	_, ok := tracker.pitchSlotMap[pitchSlot.id]
+	_, ok := tracker.pitchSlotMap[ps.id]
 	if ok {
-		pitchSlot.seen = true
-		tracker.pitchSlotMap[pitchSlot.id] = pitchSlot
+		pitchslot.seen = true
+		tracker.pitchSlotMap[ps.id] = ps
 	} else {
-		pitchSlot.seen = false
-		tracker.pitchSlotMap[pitchSlot.id] = pitchSlot
+		ps.seen = false
+		tracker.pitchSlotMap[ps.id] = ps
 	}
 
 }
@@ -44,24 +44,24 @@ func (tracker *Tracker) remove(pitchSlotID string) {
 	}
 }
 
-func (tracker *Tracker) retrieve(pitchSlotID string) (PitchSlot, error) {
+func (tracker *Tracker) retrieve(pitchSlotID string) (pitchSlot, error) {
 	tracker.mu.RLock()
 	defer tracker.mu.RUnlock()
 
-	if pitchSlot, ok := tracker.pitchSlotMap[pitchSlotID]; ok {
-		return pitchSlot, nil
+	if ps, ok := tracker.pitchSlotMap[pitchSlotID]; ok {
+		return ps, nil
 	}
 
-	return PitchSlot{}, errors.New("pitch-slot-ID not found in tracker")
+	return pitchSlot{}, errors.New("pitch-slot-ID not found in tracker")
 }
 
-func (tracker *Tracker) retrieveAll() []PitchSlot {
+func (tracker *Tracker) retrieveAll() []pitchSlot {
 	tracker.mu.RLock()
 	defer tracker.mu.RUnlock()
 
-	pitchSlots := []PitchSlot{}
-	for _, pitchSlot := range tracker.pitchSlotMap {
-		pitchSlots = append(pitchSlots, pitchSlot)
+	pitchSlots := []pitchSlot{}
+	for _, ps := range tracker.pitchSlotMap {
+		pitchSlots = append(pitchSlots, ps)
 	}
 
 	sort.Slice(pitchSlots, func(i, j int) bool {
@@ -71,14 +71,14 @@ func (tracker *Tracker) retrieveAll() []PitchSlot {
 	return pitchSlots
 }
 
-func (tracker *Tracker) retrieveUnseen() []PitchSlot {
+func (tracker *Tracker) retrieveUnseen() []pitchSlot {
 	tracker.mu.RLock()
 	defer tracker.mu.RUnlock()
 
-	unseenPitchSlots := []PitchSlot{}
-	for _, pitchSlot := range tracker.pitchSlotMap {
-		if !pitchSlot.seen {
-			unseenPitchSlots = append(unseenPitchSlots, pitchSlot)
+	unseenPitchSlots := []pitchSlot{}
+	for _, ps := range tracker.pitchSlotMap {
+		if !ps.seen {
+			unseenPitchSlots = append(unseenPitchSlots, ps)
 		}
 	}
 
@@ -89,14 +89,14 @@ func (tracker *Tracker) retrieveUnseen() []PitchSlot {
 	return unseenPitchSlots
 }
 
-func (tracker *Tracker) getMap() map[string]PitchSlot {
+func (tracker *Tracker) getMap() map[string]pitchSlot {
 	tracker.mu.RLock()
 	defer tracker.mu.RUnlock()
 
-	copyMap := make(map[string]PitchSlot)
+	copyMap := make(map[string]pitchSlot)
 
-	for pitchSlotID, pitchSlot := range tracker.pitchSlotMap {
-		copyMap[pitchSlotID] = pitchSlot
+	for pitchSlotID, ps := range tracker.pitchSlotMap {
+		copyMap[pitchSlotID] = ps
 	}
 
 	return copyMap

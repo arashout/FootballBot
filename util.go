@@ -21,10 +21,10 @@ func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
 	)
 }
 
-func createPitchSlot(_pitch mlpapi.Pitch, _slot mlpapi.Slot) PitchSlot {
+func createPitchSlot(_pitch mlpapi.Pitch, _slot mlpapi.Slot) pitchSlot {
 	// Use the Pitch ID and Slot ID to create a unique identifer
 	pitchSlotID := calculatePitchSlotID(_pitch.ID, _slot.ID)
-	return PitchSlot{
+	return pitchSlot{
 		id:    pitchSlotID,
 		pitch: _pitch,
 		slot:  _slot,

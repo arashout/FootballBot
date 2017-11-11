@@ -5,14 +5,14 @@ import (
 )
 
 // Credentials ...
-type Credentials struct {
+type credentials struct {
 	VertificationToken string
 	IncomingChannelID  string
 	TickerInterval     int // In minutes
 }
 
 // PitchSlot is a struct used in tracker for keeping track of all the already queryed slots for retrieval
-type PitchSlot struct {
+type pitchSlot struct {
 	id    string
 	seen  bool
 	pitch mlpapi.Pitch
