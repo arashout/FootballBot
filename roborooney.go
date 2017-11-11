@@ -3,13 +3,12 @@ package roborooney
 import (
 	"fmt"
 	"log"
-	"os"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/arashout/mlpapi"
-	"github.com/nlopes/slack"
 )
 
 const (
@@ -36,14 +35,12 @@ const (
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
 type RoboRooney struct {
-	cred        *Credentials
-	slackClient *slack.Client
-	mlpClient   *mlpapi.MLPClient
-	rtm         *slack.RTM
-	tracker     *Tracker
-	ticker      *time.Ticker
-	pitches     []mlpapi.Pitch
-	rules       []mlpapi.Rule
+	cred      *Credentials
+	mlpClient *mlpapi.MLPClient
+	tracker   *Tracker
+	ticker    *time.Ticker
+	pitches   []mlpapi.Pitch
+	rules     []mlpapi.Rule
 }
 
 // NewRobo creates a new initialized robo object that the client can interact with
@@ -67,59 +64,11 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (ro
 
 func (robo *RoboRooney) initialize(cred *Credentials) {
 	robo.cred = cred
-	robo.slackClient = slack.New(cred.APIToken)
-	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
-	slack.SetLogger(logger)
-	robo.slackClient.SetDebug(false)
 }
 
-// Connect to Slack and start main loop
-func (robo *RoboRooney) Connect() {
-	log.Println("Creating a websocket connection with Slack")
-	robo.rtm = robo.slackClient.NewRTM()
-	go robo.rtm.ManageConnection()
-	log.Println(robotName + " is ready to go.")
-
-	go func() {
-		for t := range robo.ticker.C {
-			log.Println("Tick at: ", t)
-			handleCommand(robo, commandUnseen, robo.cred.NotificationChannelID, "")
-		}
-	}()
-
-	// Listen for any incoming messages that mention @roborooney in channels it is invited to
-	for msg := range robo.rtm.IncomingEvents {
-		switch ev := msg.Data.(type) {
-
-		case *slack.MessageEvent:
-			if !isBot(ev.Msg) && robo.isMentioned(&ev.Msg) {
-				// Determine which command is passed as an argument, default to sending help message
-				// Note: We send these messages only to the channel we received the event from
-				if strings.Contains(ev.Msg.Text, commandList) {
-					handleCommand(robo, commandList, ev.Msg.Channel, ev.Msg.Text)
-				} else if strings.Contains(ev.Msg.Text, commandUnseen) {
-					handleCommand(robo, commandUnseen, ev.Msg.Channel, ev.Msg.Text)
-				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
-					handleCommand(robo, commandCheckout, ev.Msg.Channel, ev.Msg.Text)
-				} else if strings.Contains(ev.Msg.Text, commandPoll) {
-					handleCommand(robo, commandPoll, ev.Msg.Channel, ev.Msg.Text)
-				} else if strings.Contains(ev.Msg.Text, commandRules) {
-					handleCommand(robo, commandRules, ev.Msg.Channel, ev.Msg.Text)
-				} else if strings.Contains(ev.Msg.Text, commandPitches) {
-					handleCommand(robo, commandPitches, ev.Msg.Channel, ev.Msg.Text)
-				} else {
-					handleCommand(robo, commandHelp, ev.Msg.Channel, ev.Msg.Text)
-				}
-			}
-
-		case *slack.RTMError:
-			log.Printf("Error: %s\n", ev.Error())
-
-		case *slack.InvalidAuthEvent:
-			log.Printf("Invalid credentials")
-			return
-		}
-	}
+func (robo *RoboRooney) HandleMessage(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling message")
+	fmt.Fprintln(w, "Hello World")
 }
 
 // Close robo
@@ -128,15 +77,11 @@ func (robo *RoboRooney) Close() {
 	robo.mlpClient.Close()
 }
 
-func (robo *RoboRooney) isMentioned(msg *slack.Msg) bool {
+func (robo *RoboRooney) isMentioned(msgText string) bool {
 	if robo.cred.BotID != "" {
-		return strings.Contains(msg.Text, robotName) || strings.Contains(msg.Text, fmt.Sprintf("<@%s>", robo.cred.BotID))
+		return strings.Contains(msgText, robotName) || strings.Contains(msgText, fmt.Sprintf("<@%s>", robo.cred.BotID))
 	}
-	return strings.Contains(msg.Text, robotName)
-}
-
-func (robo *RoboRooney) sendMessage(s string, channelID string) {
-	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, channelID))
+	return strings.Contains(msgText, robotName)
 }
 
 func (robo *RoboRooney) getFilteredPitchSlots(t1 time.Time, t2 time.Time) map[string]PitchSlot {
