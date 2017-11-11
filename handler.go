@@ -3,38 +3,38 @@ package roborooney
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"strings"
 
 	"github.com/arashout/mlpapi"
 )
 
-// NOTE: That if msgText is empty string that means call came from ticker
-func handleCommand(robo *RoboRooney, command string, channelID string, msgText string) {
-	var result string
-	switch command {
-	case commandList:
-		result = handlerListCommand(robo)
-	case commandUnseen:
-		result = handlerUnseenCommand(robo, msgText == "")
-	case commandCheckout:
-		result = handlerCheckoutCommand(robo, msgText)
-	case commandPoll:
-		result = handlerPollCommand(robo)
-	case commandRules:
-		result = handlerRulesCommand(robo)
-	case commandPitches:
-		result = handlerPitchesCommand(robo)
-	case commandHelp:
-		result = textHelp
-	default:
-		log.Println("Command not recognized!")
+func (robo *RoboRooney) HandleMessage(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling message")
+	// TODO: Verify token
+
+	log.Println("Parsing form")
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form.", http.StatusBadRequest)
+		return
 	}
-	if result != "" {
-		robo.sendMessage(result, channelID)
+
+	// Get text called with slash command
+	textSlash := r.Form.Get("text")
+
+	var textResult string
+	if strings.Contains(textSlash, commandList) {
+		textResult = robo.handlerListCommand()
+	} else {
+		fmt.Fprintln(w, textHelp)
+		return
 	}
+
+	fmt.Fprintln(w, textResult)
 
 }
 
-func handlerListCommand(robo *RoboRooney) string {
+func (robo *RoboRooney) handlerListCommand() string {
 	robo.updateTracker()
 
 	textListSlots := ""
@@ -46,7 +46,7 @@ func handlerListCommand(robo *RoboRooney) string {
 	return textListSlots
 }
 
-func handlerUnseenCommand(robo *RoboRooney, fromTicker bool) string {
+func (robo *RoboRooney) handlerUnseenCommand(fromTicker bool) string {
 	robo.updateTracker()
 
 	textListSlots := ""
@@ -63,10 +63,10 @@ func handlerUnseenCommand(robo *RoboRooney, fromTicker bool) string {
 	return textListSlots
 }
 
-func handlerCheckoutCommand(robo *RoboRooney, msgTest string) string {
+func (robo *RoboRooney) handlerCheckoutCommand(msgText string) string {
 	robo.updateTracker()
 
-	pitchSlotID := regexPitchSlotID.FindString(msgTest)
+	pitchSlotID := regexPitchSlotID.FindString(msgText)
 	if pitchSlotID != "" {
 		pitchSlot, err := robo.tracker.retrieve(pitchSlotID)
 		if err != nil {
@@ -77,7 +77,7 @@ func handlerCheckoutCommand(robo *RoboRooney, msgTest string) string {
 	return "No Pitch-Slot ID found in message. Make sure it is formatted correctly."
 }
 
-func handlerPollCommand(robo *RoboRooney) string {
+func (robo *RoboRooney) handlerPollCommand() string {
 	pitchSlots := robo.tracker.retrieveAll()
 
 	if len(pitchSlots) == 0 {
@@ -94,7 +94,7 @@ func handlerPollCommand(robo *RoboRooney) string {
 	return textPoll
 }
 
-func handlerRulesCommand(robo *RoboRooney) string {
+func (robo *RoboRooney) handlerRulesCommand() string {
 	textRules := ""
 	for _, rule := range robo.rules {
 		textRules += "-" + rule.Description + "\n"
@@ -102,7 +102,7 @@ func handlerRulesCommand(robo *RoboRooney) string {
 	return textRules
 }
 
-func handlerPitchesCommand(robo *RoboRooney) string {
+func (robo *RoboRooney) handlerPitchesCommand() string {
 	textPitches := ""
 	for _, pitch := range robo.pitches {
 		textPitches += "-" + pitch.Name + "\n"

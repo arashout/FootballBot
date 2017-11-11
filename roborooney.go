@@ -1,11 +1,10 @@
 package roborooney
 
 import (
-	"fmt"
 	"log"
-	"net/http"
+	"os"
 	"regexp"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/arashout/mlpapi"
@@ -35,7 +34,7 @@ const (
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
 type RoboRooney struct {
-	cred      *Credentials
+	cred      Credentials
 	mlpClient *mlpapi.MLPClient
 	tracker   *Tracker
 	ticker    *time.Ticker
@@ -46,7 +45,7 @@ type RoboRooney struct {
 // NewRobo creates a new initialized robo object that the client can interact with
 func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (robo *RoboRooney) {
 	robo = &RoboRooney{}
-	robo.initialize(cred)
+	robo.cred = readCredentials()
 
 	robo.mlpClient = mlpapi.New()
 	robo.tracker = NewTracker()
@@ -62,26 +61,26 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule, cred *Credentials) (ro
 	return robo
 }
 
-func (robo *RoboRooney) initialize(cred *Credentials) {
-	robo.cred = cred
-}
+func readCredentials() Credentials {
+	log.Print("Reading credentials from enviroment:\n")
+	tickerInterval, err := strconv.Atoi(os.Getenv("TICKER_INTERVAL"))
+	if err != nil {
+		log.Fatal("Unable to parse ticker interval: " + os.Getenv("TICKER_INTERVAL"))
+	}
 
-func (robo *RoboRooney) HandleMessage(w http.ResponseWriter, r *http.Request) {
-	log.Println("Handling message")
-	fmt.Fprintln(w, "Hello World")
+	cred := Credentials{
+		VertificationToken: os.Getenv("VERTIFICATION_TOKEN"),
+		IncomingChannelID:  os.Getenv("INCOMING_CHANNEL_ID"),
+		TickerInterval:     tickerInterval,
+	}
+
+	return cred
 }
 
 // Close robo
 func (robo *RoboRooney) Close() {
 	log.Println(robotName + " is shutting down.")
 	robo.mlpClient.Close()
-}
-
-func (robo *RoboRooney) isMentioned(msgText string) bool {
-	if robo.cred.BotID != "" {
-		return strings.Contains(msgText, robotName) || strings.Contains(msgText, fmt.Sprintf("<@%s>", robo.cred.BotID))
-	}
-	return strings.Contains(msgText, robotName)
 }
 
 func (robo *RoboRooney) getFilteredPitchSlots(t1 time.Time, t2 time.Time) map[string]PitchSlot {
