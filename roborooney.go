@@ -34,7 +34,7 @@ const (
 var regexPitchSlotID = regexp.MustCompile(`\d{5}-\d{6}`)
 
 type RoboRooney struct {
-	cred      Credentials
+	cred      credentials
 	mlpClient *mlpapi.MLPClient
 	tracker   *Tracker
 	ticker    *time.Ticker
@@ -61,14 +61,14 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule) (robo *RoboRooney) {
 	return robo
 }
 
-func readCredentials() Credentials {
+func readCredentials() credentials {
 	log.Print("Reading credentials from enviroment:\n")
 	tickerInterval, err := strconv.Atoi(os.Getenv("TICKER_INTERVAL"))
 	if err != nil {
 		log.Fatal("Unable to parse ticker interval: " + os.Getenv("TICKER_INTERVAL"))
 	}
 
-	cred := Credentials{
+	cred := credentials{
 		VertificationToken: os.Getenv("VERTIFICATION_TOKEN"),
 		IncomingChannelID:  os.Getenv("INCOMING_CHANNEL_ID"),
 		TickerInterval:     tickerInterval,
