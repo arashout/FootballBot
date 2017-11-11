@@ -17,6 +17,7 @@ const (
 	commandCheckout = "checkout"
 	commandPoll     = "poll"
 	commandList     = "list"
+	commandUnseen   = "unseen"
 	commandRules    = "rules"
 	commandPitches  = "pitches"
 	commandHelp     = "help"
@@ -24,6 +25,7 @@ const (
 	I'm RoboRooney, the football bot. You can mention me whenever you want to find pitches to play on.
 	@roborooney : Bring up this dialogue again
 	@roborooney list : Lists the available slots that satisfy the rules
+	@roborooney unseen : List the unseen slots available that satisfy the rules
 	@roborooney rules : Lists the descriptions of the rules currently in effect
 	@roborooney pitches : Lists the monitored pitches
 	@roborooney poll : Start a poll with the available slots (Not working...)
@@ -81,7 +83,7 @@ func (robo *RoboRooney) Connect() {
 	go func() {
 		for t := range robo.ticker.C {
 			log.Println("Tick at: ", t)
-			handleCommand(robo, commandList, robo.cred.NotificationChannelID, "")
+			handleCommand(robo, commandUnseen, robo.cred.NotificationChannelID, "")
 		}
 	}()
 
@@ -95,6 +97,8 @@ func (robo *RoboRooney) Connect() {
 				// Note: We send these messages only to the channel we received the event from
 				if strings.Contains(ev.Msg.Text, commandList) {
 					handleCommand(robo, commandList, ev.Msg.Channel, ev.Msg.Text)
+				} else if strings.Contains(ev.Msg.Text, commandUnseen) {
+					handleCommand(robo, commandUnseen, ev.Msg.Channel, ev.Msg.Text)
 				} else if strings.Contains(ev.Msg.Text, commandCheckout) {
 					handleCommand(robo, commandCheckout, ev.Msg.Channel, ev.Msg.Text)
 				} else if strings.Contains(ev.Msg.Text, commandPoll) {
@@ -135,15 +139,39 @@ func (robo *RoboRooney) sendMessage(s string, channelID string) {
 	robo.rtm.SendMessage(robo.rtm.NewOutgoingMessage(s, channelID))
 }
 
-// UpdateTracker updates the list of available slots in the shared tracker struct given two time objects
-func (robo *RoboRooney) UpdateTracker(t1 time.Time, t2 time.Time) {
-	robo.tracker.Clear()
+func (robo *RoboRooney) getFilteredPitchSlots(t1 time.Time, t2 time.Time) map[string]PitchSlot {
+	pitchSlotMap := make(map[string]PitchSlot)
 
 	for _, pitch := range robo.pitches {
 		slots := robo.mlpClient.GetPitchSlots(pitch, t1, t2)
 		filteredSlots := robo.mlpClient.FilterSlotsByRules(slots, robo.rules)
+
 		for _, slot := range filteredSlots {
-			robo.tracker.Insert(pitch, slot)
+			pitchSlot := createPitchSlot(pitch, slot)
+			pitchSlotMap[pitchSlot.id] = pitchSlot
 		}
+
+	}
+
+	return pitchSlotMap
+}
+
+func (robo *RoboRooney) updateTracker() {
+	t1, t2 := getTimeRange()
+
+	newPitchSlotMap := robo.getFilteredPitchSlots(t1, t2)
+
+	// Remove expired listings and mark pitchslots that are in both maps
+	for _, oldPitchSlot := range robo.tracker.getMap() {
+		_, ok := newPitchSlotMap[oldPitchSlot.id]
+		if ok {
+			robo.tracker.upsert(oldPitchSlot)
+		} else {
+			robo.tracker.remove(oldPitchSlot.id)
+		}
+	}
+
+	for _, newPitchSlot := range newPitchSlotMap {
+		robo.tracker.upsert(newPitchSlot)
 	}
 }

@@ -3,27 +3,18 @@ package roborooney
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/arashout/mlpapi"
 )
 
-func getTimeRange() (time.Time, time.Time) {
-	// Look for slots between now and 2 weeks ahead, which is the limit of MyLocalPitch API anyway
-	t1 := time.Now()
-	return t1, t1.AddDate(0, 0, 14)
-}
-
-// NOTE: That msgText isn't always necessary so you can simply pass an empty string
+// NOTE: That if msgText is empty string that means call came from ticker
 func handleCommand(robo *RoboRooney, command string, channelID string, msgText string) {
-	t1, t2 := getTimeRange()
-	// Update the tracker so we have most up to date listings
-	robo.UpdateTracker(t1, t2)
-
 	var result string
 	switch command {
 	case commandList:
 		result = handlerListCommand(robo)
+	case commandUnseen:
+		result = handlerUnseenCommand(robo, msgText == "")
 	case commandCheckout:
 		result = handlerCheckoutCommand(robo, msgText)
 	case commandPoll:
@@ -37,13 +28,34 @@ func handleCommand(robo *RoboRooney, command string, channelID string, msgText s
 	default:
 		log.Println("Command not recognized!")
 	}
-	robo.sendMessage(result, channelID)
+	if result != "" {
+		robo.sendMessage(result, channelID)
+	}
 
 }
 
 func handlerListCommand(robo *RoboRooney) string {
+	robo.updateTracker()
+
 	textListSlots := ""
-	pitchSlots := robo.tracker.RetrieveAll()
+	pitchSlots := robo.tracker.retrieveAll()
+	for _, pitchSlot := range pitchSlots {
+		textSlot := fmt.Sprintf("%s\n", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
+		textListSlots += textSlot
+	}
+	return textListSlots
+}
+
+func handlerUnseenCommand(robo *RoboRooney, fromTicker bool) string {
+	robo.updateTracker()
+
+	textListSlots := ""
+	pitchSlots := robo.tracker.retrieveUnseen()
+
+	if len(pitchSlots) == 0 && !fromTicker {
+		return "No new slots are available"
+	}
+
 	for _, pitchSlot := range pitchSlots {
 		textSlot := fmt.Sprintf("%s\n", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
 		textListSlots += textSlot
@@ -52,9 +64,11 @@ func handlerListCommand(robo *RoboRooney) string {
 }
 
 func handlerCheckoutCommand(robo *RoboRooney, msgTest string) string {
+	robo.updateTracker()
+
 	pitchSlotID := regexPitchSlotID.FindString(msgTest)
 	if pitchSlotID != "" {
-		pitchSlot, err := robo.tracker.Retrieve(pitchSlotID)
+		pitchSlot, err := robo.tracker.retrieve(pitchSlotID)
 		if err != nil {
 			return "Pitch-Slot ID not found. Try listing all available bookings again"
 		}
@@ -64,7 +78,7 @@ func handlerCheckoutCommand(robo *RoboRooney, msgTest string) string {
 }
 
 func handlerPollCommand(robo *RoboRooney) string {
-	pitchSlots := robo.tracker.RetrieveAll()
+	pitchSlots := robo.tracker.retrieveAll()
 
 	if len(pitchSlots) == 0 {
 		return "No slots available for polling\nTry checking availablity first."

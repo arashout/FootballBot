@@ -14,6 +14,8 @@ type Credentials struct {
 
 // PitchSlot is a struct used in tracker for keeping track of all the already queryed slots for retrieval
 type PitchSlot struct {
+	id    string
+	seen  bool
 	pitch mlpapi.Pitch
 	slot  mlpapi.Slot
 }
