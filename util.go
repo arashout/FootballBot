@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/arashout/mlpapi"
-	"github.com/nlopes/slack"
 )
 
 func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
@@ -20,10 +19,6 @@ func formatSlotMessage(pitch mlpapi.Pitch, slot mlpapi.Slot) string {
 		pitch.Name,
 		calculatePitchSlotID(pitch.ID, slot.ID),
 	)
-}
-
-func isBot(msg slack.Msg) bool {
-	return msg.BotID != ""
 }
 
 func createPitchSlot(_pitch mlpapi.Pitch, _slot mlpapi.Slot) PitchSlot {
