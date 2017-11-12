@@ -13,7 +13,6 @@ import (
 const (
 	robotName       = "roborooney"
 	commandCheckout = "checkout"
-	commandPoll     = "poll"
 	commandList     = "list"
 	commandUnseen   = "unseen"
 	commandRules    = "rules"
@@ -26,7 +25,6 @@ const (
 	@roborooney unseen : List the unseen slots available that satisfy the rules
 	@roborooney rules : Lists the descriptions of the rules currently in effect
 	@roborooney pitches : Lists the monitored pitches
-	@roborooney poll : Start a poll with the available slots (Not working...)
 	@roborooney checkout {pitch-slot ID} : Get the checkout link for a slot (pitch-slot ID is listed after each slot)
 	`
 )

@@ -31,8 +31,6 @@ func (robo *RoboRooney) HandleMessage(w http.ResponseWriter, r *http.Request) {
 		textResult = robo.handlerRulesCommand()
 	} else if strings.Contains(textSlash, commandPitches) {
 		textResult = robo.handlerPitchesCommand()
-	} else if strings.Contains(textSlash, commandPoll) {
-		textResult = robo.handlerPollCommand()
 	} else if strings.Contains(textSlash, commandCheckout) {
 		textResult = robo.handlerCheckoutCommand(textSlash)
 	} else {
@@ -85,23 +83,6 @@ func (robo *RoboRooney) handlerCheckoutCommand(msgText string) string {
 		return mlpapi.GetSlotCheckoutLink(pitchSlot.pitch, pitchSlot.slot)
 	}
 	return "No Pitch-Slot ID found in message. Make sure it is formatted correctly."
-}
-
-func (robo *RoboRooney) handlerPollCommand() string {
-	pitchSlots := robo.tracker.retrieveAll()
-
-	if len(pitchSlots) == 0 {
-		return "No slots available for polling\nTry checking availablity first."
-	}
-
-	textPoll := "/poll 'Which time(s) works best?' "
-
-	for _, pitchSlot := range pitchSlots {
-		optionString := fmt.Sprintf(" \"%s\" ", formatSlotMessage(pitchSlot.pitch, pitchSlot.slot))
-		textPoll += optionString
-	}
-
-	return textPoll
 }
 
 func (robo *RoboRooney) handlerRulesCommand() string {
