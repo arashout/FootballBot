@@ -3,11 +3,20 @@ package roborooney
 import (
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 
 	"github.com/arashout/mlpapi"
 )
 
+func (robo *RoboRooney) HandleEvent(w http.ResponseWriter, r *http.Request) {
+	// Save a copy of this request for debugging.
+	requestDump, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(requestDump))
+}
 func (robo *RoboRooney) HandleSlash(w http.ResponseWriter, r *http.Request) {
 	// TODO: Verify token
 
