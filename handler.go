@@ -2,7 +2,6 @@ package roborooney
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -10,10 +9,8 @@ import (
 )
 
 func (robo *RoboRooney) HandleSlash(w http.ResponseWriter, r *http.Request) {
-	log.Println("Handling message")
 	// TODO: Verify token
 
-	log.Println("Parsing form")
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Error parsing form.", http.StatusBadRequest)
 		return
@@ -39,7 +36,6 @@ func (robo *RoboRooney) HandleSlash(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, textResult)
-
 }
 
 func (robo *RoboRooney) handlerListCommand() string {
