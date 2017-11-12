@@ -9,7 +9,7 @@ import (
 	"github.com/arashout/mlpapi"
 )
 
-func (robo *RoboRooney) HandleMessage(w http.ResponseWriter, r *http.Request) {
+func (robo *RoboRooney) HandleSlash(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling message")
 	// TODO: Verify token
 
