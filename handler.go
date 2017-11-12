@@ -2,6 +2,7 @@ package roborooney
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -16,6 +17,16 @@ func (robo *RoboRooney) HandleEvent(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 	fmt.Println(string(requestDump))
+
+	// Respond with challenge parameter
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form.", http.StatusBadRequest)
+		return
+	}
+	challengeValue := r.Form.Get("challenge")
+	log.Println(challengeValue)
+	fmt.Fprintln(w, challengeValue)
+
 }
 func (robo *RoboRooney) HandleSlash(w http.ResponseWriter, r *http.Request) {
 	// TODO: Verify token
