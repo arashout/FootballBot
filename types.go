@@ -6,9 +6,9 @@ import (
 
 // Credentials ...
 type credentials struct {
-	VertificationToken string
-	IncomingChannelID  string
-	TickerInterval     int // In minutes
+	VerificationToken string
+	IncomingChannelID string
+	TickerInterval    int // In minutes
 }
 
 // PitchSlot is a struct used in tracker for keeping track of all the already queryed slots for retrieval

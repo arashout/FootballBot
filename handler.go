@@ -35,7 +35,7 @@ func (robo *RoboRooney) HandleSlash(w http.ResponseWriter, r *http.Request) {
 	}
 	//Verify token - To ensure request coming from Slack
 	verificationCode := r.Form.Get("token")
-	if verificationCode != robo.cred.VertificationToken {
+	if verificationCode != robo.cred.VerificationToken {
 		http.Error(w, "Wrong verification token sent", http.StatusUnauthorized)
 		return
 	}

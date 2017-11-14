@@ -67,9 +67,9 @@ func readCredentials() credentials {
 	}
 
 	cred := credentials{
-		VertificationToken: os.Getenv("VERTIFICATION_TOKEN"),
-		IncomingChannelID:  os.Getenv("INCOMING_CHANNEL_ID"),
-		TickerInterval:     tickerInterval,
+		VerificationToken: os.Getenv("VERIFICATION_TOKEN"),
+		IncomingChannelID: os.Getenv("INCOMING_CHANNEL_ID"),
+		TickerInterval:    tickerInterval,
 	}
 
 	return cred
