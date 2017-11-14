@@ -29,10 +29,14 @@ func (robo *RoboRooney) HandleEvent(w http.ResponseWriter, r *http.Request) {
 
 }
 func (robo *RoboRooney) HandleSlash(w http.ResponseWriter, r *http.Request) {
-	// TODO: Verify token
-
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Error parsing form.", http.StatusBadRequest)
+		return
+	}
+	//Verify token - To ensure request coming from Slack
+	verificationCode := r.Form.Get("token")
+	if verificationCode != robo.cred.VertificationToken {
+		http.Error(w, "Wrong verification token sent", http.StatusUnauthorized)
 		return
 	}
 
