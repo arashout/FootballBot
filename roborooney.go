@@ -62,9 +62,10 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule) (robo *RoboRooney) {
 
 // StartNotificationTicker starts sending notification to slack
 func (robo *RoboRooney) StartNotificationTicker() {
+	log.Println("Launcing notification ticker go-routine")
 	go func() {
 		for t := range robo.ticker.C {
-			textResults := robo.handlerUnseenCommand(false)
+			textResults := robo.handlerUnseenCommand(true)
 			textJSON := fmt.Sprintf(`{"text":"%s"}`, textResults)
 			sendPOSTJSON(robo.cred.IncomingWebhookURL, textJSON)
 			log.Printf("Ticker at: %s", t)

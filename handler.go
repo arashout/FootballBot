@@ -10,6 +10,7 @@ import (
 	"github.com/arashout/mlpapi"
 )
 
+// HandleEvent is an endpoint for handling event subscriptions
 func (robo *RoboRooney) HandleEvent(w http.ResponseWriter, r *http.Request) {
 	// Save a copy of this request for debugging.
 	requestDump, err := httputil.DumpRequest(r, true)
