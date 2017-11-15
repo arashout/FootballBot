@@ -59,6 +59,17 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule) (robo *RoboRooney) {
 	return robo
 }
 
+// StartNotificationTicker starts sending notification to slack
+func (robo *RoboRooney) StartNotificationTicker() {
+	go func() {
+		for t := range robo.ticker.C {
+			text := robo.handlerUnseenCommand(false)
+			sendPOSTJSON(robo.cred.IncomingWebhookURL, text)
+			log.Printf("Ticker at: %s", t)
+		}
+	}()
+}
+
 func readCredentials() credentials {
 	log.Print("Reading credentials from enviroment:\n")
 	tickerInterval, err := strconv.Atoi(os.Getenv("TICKER_INTERVAL"))
@@ -67,9 +78,9 @@ func readCredentials() credentials {
 	}
 
 	cred := credentials{
-		VerificationToken: os.Getenv("VERIFICATION_TOKEN"),
-		IncomingChannelID: os.Getenv("INCOMING_CHANNEL_ID"),
-		TickerInterval:    tickerInterval,
+		VerificationToken:  os.Getenv("VERIFICATION_TOKEN"),
+		IncomingWebhookURL: os.Getenv("INCOMING_WEBHOOK_URL"),
+		TickerInterval:     tickerInterval,
 	}
 
 	return cred
