@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"strconv"
 	"time"
 
@@ -58,4 +59,14 @@ func sendPOSTJSON(url string, jsonString string) {
 	log.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
 	log.Println("response Body:", string(body))
+}
+
+func logRequest(description string, r *http.Request) {
+	// Save a copy of this request for debugging.
+	requestDump, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(description)
+	log.Println(string(requestDump))
 }
