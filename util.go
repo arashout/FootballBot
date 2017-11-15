@@ -2,7 +2,6 @@ package roborooney
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -43,12 +42,15 @@ func getTimeRange() (time.Time, time.Time) {
 	return t1, t1.AddDate(0, 0, 14)
 }
 
-func sendPOSTJSON(url string, bodyStruct interface{}) {
-	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(bodyStruct)
-	resp, err := http.Post(url, "application/json; charset=utf-8", b)
+func sendPOSTJSON(url string, jsonString string) {
+	jsonBytes := []byte(jsonString)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBytes))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Error posting to slack: %s", err.Error())
+		panic(err)
 	}
 
 	defer resp.Body.Close()

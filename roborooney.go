@@ -1,6 +1,7 @@
 package roborooney
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"regexp"
@@ -63,8 +64,9 @@ func NewRobo(pitches []mlpapi.Pitch, rules []mlpapi.Rule) (robo *RoboRooney) {
 func (robo *RoboRooney) StartNotificationTicker() {
 	go func() {
 		for t := range robo.ticker.C {
-			text := robo.handlerUnseenCommand(false)
-			sendPOSTJSON(robo.cred.IncomingWebhookURL, text)
+			textResults := robo.handlerUnseenCommand(false)
+			textJSON := fmt.Sprintf(`{"text":"%s"}`, textResults)
+			sendPOSTJSON(robo.cred.IncomingWebhookURL, textJSON)
 			log.Printf("Ticker at: %s", t)
 		}
 	}()
