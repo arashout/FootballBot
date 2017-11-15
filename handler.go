@@ -3,7 +3,6 @@ package roborooney
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -27,7 +26,6 @@ func (robo *RoboRooney) HandleEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(req.ChallengeValue)
 	// Write challenge back in plain text
 	fmt.Fprintln(w, req.ChallengeValue)
 
